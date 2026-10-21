@@ -1,4 +1,4 @@
-import ContactPage from "@/components/contact-page";
+import ContactPage from "@/components/pages/contact-page";
 
 export const metadata = {
   title: "Contact Us — Xura Lab",

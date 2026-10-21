@@ -11,7 +11,7 @@ for (const product of catalogue) {
   await pool.query(
     `INSERT INTO products (
        id, slug, name, tagline, gender, volume_ml, price, image_url,
-       lead, description, notes, character, best_for, sort_order, is_active
+       \`lead\`, description, notes, \`character\`, best_for, sort_order, is_active
      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE)
      ON DUPLICATE KEY UPDATE
        slug = VALUES(slug),
@@ -21,10 +21,10 @@ for (const product of catalogue) {
        volume_ml = VALUES(volume_ml),
        price = VALUES(price),
        image_url = VALUES(image_url),
-       lead = VALUES(lead),
+       \`lead\` = VALUES(\`lead\`),
        description = VALUES(description),
        notes = VALUES(notes),
-       character = VALUES(character),
+       \`character\` = VALUES(\`character\`),
        best_for = VALUES(best_for),
        sort_order = VALUES(sort_order),
        is_active = TRUE`,

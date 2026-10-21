@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import ProductDetail from "@/components/product-detail";
+import ProductDetail from "@/components/storefront/product-detail";
 import { getProductBySlug, productCatalog } from "@/data/products";
 
 async function getProduct(slug) {

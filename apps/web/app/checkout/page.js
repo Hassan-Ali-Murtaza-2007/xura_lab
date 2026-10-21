@@ -1,4 +1,4 @@
-import CheckoutPage from "@/components/checkout-page";
+import CheckoutPage from "@/components/checkout/checkout-page";
 
 export const metadata = {
   title: "Checkout — Xura Lab",

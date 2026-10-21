@@ -1,4 +1,4 @@
-import AboutPage from "@/components/about-page";
+import AboutPage from "@/components/pages/about-page";
 
 export const metadata = {
   title: "Our Story — Xura Lab",

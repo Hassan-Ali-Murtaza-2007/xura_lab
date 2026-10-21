@@ -1,4 +1,4 @@
-import AdminLogin from "@/components/admin-login";
+import AdminLogin from "@/components/admin/admin-login";
 
 export const metadata = {
   title: "Admin Login — Xura Lab",

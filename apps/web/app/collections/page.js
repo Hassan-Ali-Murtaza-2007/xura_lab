@@ -1,4 +1,4 @@
-import CollectionPage from "@/components/collection-page";
+import CollectionPage from "@/components/storefront/collection-page";
 
 export const metadata = {
   title: "Explore the Collection — Xura Lab",
