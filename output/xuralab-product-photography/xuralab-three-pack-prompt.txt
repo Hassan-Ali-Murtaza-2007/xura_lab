@@ -1,0 +1,17 @@
+Xuralab three-piece set
+Created with the built-in image_gen tool.
+
+Final image: D:/Xuor/output/xuralab-product-photography/xuralab-three-pack.png
+Dimensions: 1254 x 1254
+
+Final prompt:
+Use case: product-mockup.
+Asset type: square ecommerce main product image of a three-piece perfume discovery set.
+Primary request: Create a beautiful, photorealistic studio photograph showing the three supplied Xuralab perfumes together as one pack of three, suitable as the main image of a bundle product listing.
+Input images: image 1 is the exact NYRA bottle, image 2 is the exact VELOR bottle, image 3 is the exact ARVEN bottle. Preserve each product's clear slender cylindrical travel-atomizer shape, original transparent cap, translucent white ribbed spray collar, pale liquid, visible dip tube, matte black wrap label and fine silver serif lettering.
+Composition: one square image, a compact centered group of exactly THREE full upright bottles side by side, NYRA left, VELOR middle, ARVEN right. All bottles identical in physical size and height, aligned along the same baseline on one flat studio surface. Equal tidy gaps between bottles, no overlapping, all three labels face directly toward camera and remain completely readable. The bottles fill about 76 percent of the image height. The group is centered horizontally and vertically with balanced margins and no large empty area reserved for headlines.
+Scene/backdrop: smooth warm ivory seamless studio backdrop and matching matte ivory surface, closely matching the visual tone of the three reference product images. Minimal, luxurious, beautifully clean.
+Lighting: soft diffused studio daylight from upper left, gentle fill, delicate grounded shadows cast to the right, crisp glass highlights, realistic refraction, restrained luminous reflections. Professional commercial product photography with fine material detail.
+Exact text on labels: left bottle "NYRA" and "XURA LAB"; center bottle "VELOR" and "XURA LAB"; right bottle "ARVEN" and "XURA LAB". Preserve the supplied elegant serif label design.
+Constraints: exactly one of each fragrance, all three the same size. No added box, bag, gift wrapping, ribbon, packaging, ingredients, props, hands, podiums, banner headline, price, badge, caption, watermark, collage, cropped caps or bases. Keep the original product identity and slim travel-spray proportions. A single convincing photographic scene, square format.
+

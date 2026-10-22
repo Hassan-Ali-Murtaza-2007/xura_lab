@@ -26,6 +26,12 @@ export function DashboardIcon({ name }) {
         <path d="M12 11v10" />
       </>
     ),
+    promos: (
+      <>
+        <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z" />
+        <line x1="7" y1="7" x2="7.01" y2="7" />
+      </>
+    ),
     store: (
       <>
         <path d="M4 10h16M6 10v10h12V10M3 10l2-6h14l2 6" />
@@ -67,6 +73,10 @@ export default function AdminSidebar({ activeTab = "overview" }) {
         <Link className={activeTab === "products" ? "is-active" : ""} href="/admin/products">
           <DashboardIcon name="products" />
           <span>Products</span>
+        </Link>
+        <Link className={activeTab === "promos" ? "is-active" : ""} href="/admin/promos">
+          <DashboardIcon name="promos" />
+          <span>Promo Codes</span>
         </Link>
       </nav>
       <div className="admin-sidebar-bottom">

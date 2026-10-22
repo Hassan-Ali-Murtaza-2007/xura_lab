@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import CartDrawer from "./cart-drawer";
+import ProductCard from "./product-card";
 import { productCatalog, withCurrentProductImages } from "@/data/products";
 
 const fallbackProducts = productCatalog;
@@ -111,21 +112,21 @@ export default function Storefront() {
       .filter((item) => item.quantity > 0));
   }
 
-  function addToCart(product) {
-    const defaultVariant = product.variants?.[0];
-    if (!defaultVariant) return;
+  function addToCart(product, variant = null) {
+    const selectedVariant = variant || product.variants?.[0];
+    if (!selectedVariant) return;
 
-    const cartKey = `${product.id}:${defaultVariant.id}`;
+    const cartKey = `${product.id}:${selectedVariant.id}`;
     const newItem = {
       id: product.id,
-      variantId: defaultVariant.id,
+      variantId: selectedVariant.id,
       cartKey,
       slug: product.slug,
       name: product.name,
       gender: product.gender,
       volumeMl: product.volumeMl,
-      concentration: defaultVariant.concentrationPercent,
-      price: defaultVariant.price,
+      concentration: selectedVariant.concentrationPercent,
+      price: selectedVariant.price,
       imageUrl: product.imageUrl,
       quantity: 1
     };
@@ -223,21 +224,11 @@ export default function Storefront() {
 
           <div className="product-grid home-product-grid">
             {visibleProducts.map((product) => (
-              <article className="product-card" key={product.id}>
-                <div className="product-image">
-                  <Link className="product-image-link" href={`/products/${product.slug}`} aria-label={`View ${product.name}`}>
-                    <Image src={product.imageUrl} alt={`${product.name} fragrance`} fill sizes="(max-width: 680px) 100vw, (max-width: 960px) 50vw, 33vw" />
-                  </Link>
-                  <button className="quick-view" type="button" onClick={() => addToCart(product)}>Add to cart</button>
-                </div>
-                <Link className="product-meta" href={`/products/${product.slug}`}>
-                  <span className="product-row">
-                    <span>{product.name}</span>
-                    <span>From {money(product.price)}</span>
-                  </span>
-                  <span className="product-detail">{product.gender} · {product.volumeMl} ml</span>
-                </Link>
-              </article>
+              <ProductCard
+                key={product.id}
+                product={product}
+                onAddToCart={addToCart}
+              />
             ))}
           </div>
 

@@ -6,8 +6,28 @@ import apiRouter from "./routes/index.js";
 
 const app = express();
 
+const configuredOrigins = (process.env.WEB_ORIGIN || "http://localhost:3007")
+  .split(",")
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+
 app.disable("x-powered-by");
-app.use(cors({ origin: webOrigin, credentials: true }));
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      // Allow server-to-server or tools with no origin header
+      if (!origin) return callback(null, true);
+      if (
+        configuredOrigins.includes(origin) ||
+        /^http:\/\/localhost:(300[0-9]|4000)$/.test(origin)
+      ) {
+        return callback(null, true);
+      }
+      return callback(null, true);
+    },
+    credentials: true
+  })
+);
 app.use(express.json({ limit: "32kb" }));
 
 // Mount central API router under /api

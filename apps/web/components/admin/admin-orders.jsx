@@ -323,6 +323,16 @@ export default function AdminOrders() {
                             </td>
                             <td>
                               <strong>{money(order.total)}</strong>
+                              {order.promoCode && (
+                                <small className="admin-order-promo-label">
+                                  🏷️ {order.promoCode} (-{money(order.discountAmount)})
+                                </small>
+                              )}
+                              {Number(order.deliveryFee) === 0 && (
+                                <small className="admin-order-free-ship-label">
+                                  ✓ Free Delivery
+                                </small>
+                              )}
                             </td>
                             <td>
                               <span className={`admin-status admin-status-${order.status}`}>
@@ -440,7 +450,18 @@ export default function AdminOrders() {
                 <div className="admin-order-info-card">
                   <h4>Payment & Delivery</h4>
                   <p><strong>Method:</strong> {displayPayment(selectedOrder.paymentMethod)}</p>
-                  <p><strong>Shipping:</strong> Standard courier (PKR 370)</p>
+                  <p>
+                    <strong>Shipping:</strong>{" "}
+                    {Number(selectedOrder.deliveryFee) === 0
+                      ? "Free Delivery (Advance Payment)"
+                      : `Standard courier (${money(selectedOrder.deliveryFee || 370)})`}
+                  </p>
+                  {selectedOrder.promoCode && (
+                    <p>
+                      <strong>Promo code:</strong>{" "}
+                      <span className="admin-order-code-badge">{selectedOrder.promoCode}</span>
+                    </p>
+                  )}
                 </div>
               </div>
 
@@ -474,7 +495,18 @@ export default function AdminOrders() {
 
                 <div className="admin-order-financials">
                   <div><span>Subtotal</span><strong>{money(selectedOrder.subtotal)}</strong></div>
-                  <div><span>Delivery</span><strong>{money(selectedOrder.deliveryFee || 370)}</strong></div>
+                  {selectedOrder.promoCode && (
+                    <div style={{ color: "#234b35" }}>
+                      <span>Promo Discount ({selectedOrder.promoCode})</span>
+                      <strong>- {money(selectedOrder.discountAmount)}</strong>
+                    </div>
+                  )}
+                  <div>
+                    <span>Delivery</span>
+                    <strong>
+                      {Number(selectedOrder.deliveryFee) === 0 ? "FREE" : money(selectedOrder.deliveryFee || 370)}
+                    </strong>
+                  </div>
                   <div className="is-grand-total"><span>Grand Total</span><strong>{money(selectedOrder.total)}</strong></div>
                 </div>
               </div>

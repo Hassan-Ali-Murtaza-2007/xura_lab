@@ -3,6 +3,7 @@ import { allowedPaymentMethods } from "../config/index.js";
 import { getPool, isDatabaseConfigured } from "../db.js";
 import { getLocalCatalogue } from "../local-product-store.js";
 import { createLocalOrder } from "../local-order-store.js";
+import { getLocalPromoByCode, incrementLocalPromoUsage } from "../services/local-promo-store.js";
 import { productImagesById } from "../services/image.service.js";
 import { isCompleteAddress, normalizeAddress, withCurrentImage } from "../utils/validators.js";
 
@@ -120,6 +121,145 @@ router.get("/products/:slug", async (request, response) => {
   }
 });
 
+async function evaluatePromoCode(code, subtotal, connectionOrPool, items = []) {
+  if (!code || !String(code).trim()) return { promo: null, discountAmount: 0, eligibleSubtotal: 0 };
+  const cleanCode = String(code).trim().toUpperCase();
+
+  let promo = null;
+  if (!connectionOrPool) {
+    promo = await getLocalPromoByCode(cleanCode);
+  } else {
+    const [rows] = await connectionOrPool.query(
+      `SELECT id, code, discount_type AS discountType, discount_value AS discountValue,
+              applies_to AS appliesTo, min_order_amount AS minOrderAmount,
+              max_order_amount AS maxOrderAmount, max_discount_amount AS maxDiscountAmount,
+              usage_limit AS usageLimit, used_count AS usedCount, expires_at AS expiresAt,
+              is_active AS isActive
+       FROM promo_codes WHERE code = ? LIMIT 1`,
+      [cleanCode]
+    );
+    if (rows.length) {
+      const r = rows[0];
+      let applicableProductIds = [];
+      if (r.appliesTo === "specific") {
+        const [pRows] = await connectionOrPool.query(
+          `SELECT product_id AS productId FROM promo_code_products WHERE promo_code_id = ?`,
+          [r.id]
+        );
+        applicableProductIds = pRows.map((pr) => pr.productId);
+      }
+      promo = {
+        id: r.id,
+        code: r.code,
+        discountType: r.discountType,
+        discountValue: Number(r.discountValue),
+        appliesTo: r.appliesTo || "all",
+        applicableProductIds,
+        minOrderAmount: Number(r.minOrderAmount),
+        maxOrderAmount: r.maxOrderAmount ? Number(r.maxOrderAmount) : null,
+        maxDiscountAmount: r.maxDiscountAmount ? Number(r.maxDiscountAmount) : null,
+        usageLimit: r.usageLimit ? Number(r.usageLimit) : null,
+        usedCount: Number(r.usedCount || 0),
+        expiresAt: r.expiresAt,
+        isActive: Boolean(r.isActive)
+      };
+    }
+  }
+
+  if (!promo) {
+    throw Object.assign(new Error(`Promo code "${cleanCode}" is invalid.`), { statusCode: 400 });
+  }
+
+  if (!promo.isActive) {
+    throw Object.assign(new Error(`Promo code "${cleanCode}" is not active.`), { statusCode: 400 });
+  }
+
+  if (promo.expiresAt && new Date(promo.expiresAt) <= new Date()) {
+    throw Object.assign(new Error(`Promo code "${cleanCode}" has expired.`), { statusCode: 400 });
+  }
+
+  if (promo.usageLimit !== null && promo.usedCount >= promo.usageLimit) {
+    throw Object.assign(new Error(`Promo code "${cleanCode}" usage limit has been reached.`), { statusCode: 400 });
+  }
+
+  // Determine eligible items and eligible subtotal
+  let eligibleSubtotal = subtotal;
+  if (promo.appliesTo === "specific") {
+    const applicableIds = (promo.applicableProductIds || []).map(Number);
+    const eligibleItems = (items || []).filter((item) => applicableIds.includes(Number(item.productId)));
+
+    if (!eligibleItems.length) {
+      throw Object.assign(
+        new Error(`Promo code "${cleanCode}" is only applicable to selected fragrances that are not in your cart.`),
+        { statusCode: 400 }
+      );
+    }
+
+    eligibleSubtotal = eligibleItems.reduce((sum, item) => {
+      const lineTotal = item.lineTotal !== undefined
+        ? Number(item.lineTotal)
+        : Number(item.price || item.unitPrice || 0) * Number(item.quantity || 1);
+      return sum + lineTotal;
+    }, 0);
+  }
+
+  // Minimum spending check
+  if (promo.minOrderAmount > 0 && subtotal < promo.minOrderAmount) {
+    throw Object.assign(
+      new Error(`Cart subtotal must be at least PKR ${promo.minOrderAmount.toLocaleString()} to use this code.`),
+      { statusCode: 400 }
+    );
+  }
+
+  // Maximum spending check
+  if (promo.maxOrderAmount !== null && promo.maxOrderAmount > 0 && subtotal > promo.maxOrderAmount) {
+    throw Object.assign(
+      new Error(`Cart subtotal cannot exceed PKR ${promo.maxOrderAmount.toLocaleString()} to use this code.`),
+      { statusCode: 400 }
+    );
+  }
+
+  // Calculate discount only from eligible items sum
+  let discountAmount = 0;
+  if (promo.discountType === "percentage") {
+    discountAmount = Math.round((eligibleSubtotal * promo.discountValue) / 100);
+    if (promo.maxDiscountAmount && discountAmount > promo.maxDiscountAmount) {
+      discountAmount = promo.maxDiscountAmount;
+    }
+  } else {
+    discountAmount = Math.min(eligibleSubtotal, promo.discountValue);
+  }
+
+  return { promo, discountAmount, eligibleSubtotal };
+}
+
+router.post("/promo-codes/validate", async (request, response) => {
+  const { code, subtotal = 0, items = [] } = request.body || {};
+  if (!code || !String(code).trim()) {
+    return response.status(400).json({ valid: false, message: "Please enter a promo code." });
+  }
+
+  const pool = getPool();
+  try {
+    const { promo, discountAmount, eligibleSubtotal } = await evaluatePromoCode(code, Number(subtotal), pool, items);
+    response.json({
+      valid: true,
+      code: promo.code,
+      discountType: promo.discountType,
+      discountValue: promo.discountValue,
+      discountAmount,
+      appliesTo: promo.appliesTo,
+      applicableProductIds: promo.applicableProductIds,
+      minOrderAmount: promo.minOrderAmount,
+      maxOrderAmount: promo.maxOrderAmount,
+      eligibleSubtotal,
+      message: `Promo code "${promo.code}" applied! You save PKR ${discountAmount.toLocaleString()}.`
+    });
+  } catch (error) {
+    response.status(error.statusCode || 400).json({ valid: false, message: error.message });
+  }
+});
+
 router.post("/orders", async (request, response) => {
   const {
     email,
@@ -131,6 +271,7 @@ router.post("/orders", async (request, response) => {
     billingSameAsShipping = true,
     billingAddress: rawBillingAddress,
     orderNote,
+    promoCode,
     items
   } = request.body || {};
   const normalizedEmail = String(email || "").trim().toLowerCase().slice(0, 254);
@@ -213,8 +354,15 @@ router.post("/orders", async (request, response) => {
       });
     }
 
-    const deliveryFee = 370;
-    const total = subtotal + deliveryFee;
+    const isAdvance = paymentMethod === "bank-transfer" || paymentMethod === "card";
+    const deliveryFee = isAdvance ? 0 : 370;
+    const { promo, discountAmount } = await evaluatePromoCode(promoCode, subtotal, null, orderItems);
+    const total = Math.max(0, subtotal - discountAmount) + deliveryFee;
+
+    if (promo) {
+      await incrementLocalPromoUsage(promo.code);
+    }
+
     const createdOrder = await createLocalOrder({
       customerName,
       email: normalizedEmail,
@@ -235,6 +383,8 @@ router.post("/orders", async (request, response) => {
       billingAddress: billingAddress || null,
       marketingConsent: Boolean(marketingConsent),
       orderNote: String(orderNote || "").trim().slice(0, 500) || null,
+      promoCode: promo?.code || null,
+      discountAmount,
       subtotal,
       deliveryFee,
       total,
@@ -244,7 +394,11 @@ router.post("/orders", async (request, response) => {
     return response.status(201).json({
       message: "Your order has been placed successfully.",
       orderId: createdOrder.id,
-      total: createdOrder.total
+      subtotal,
+      discountAmount,
+      deliveryFee,
+      total: createdOrder.total,
+      promoCode: promo?.code || null
     });
   }
 
@@ -288,7 +442,20 @@ router.post("/orders", async (request, response) => {
       (total, item) => total + variantById.get(item.variantId).price * item.quantity,
       0
     );
-    const deliveryFee = 370;
+    const isAdvance = paymentMethod === "bank-transfer" || paymentMethod === "card";
+    const deliveryFee = isAdvance ? 0 : 370;
+
+    const itemsForEvaluation = normalizedItems.map((item) => ({
+      productId: item.productId,
+      variantId: item.variantId,
+      quantity: item.quantity,
+      price: variantById.get(item.variantId).price,
+      lineTotal: variantById.get(item.variantId).price * item.quantity
+    }));
+
+    const { promo, discountAmount } = await evaluatePromoCode(promoCode, subtotal, connection, itemsForEvaluation);
+    const total = Math.max(0, subtotal - discountAmount) + deliveryFee;
+
     const customerName = `${shippingAddress.firstName} ${shippingAddress.lastName}`.trim();
     const deliveryAddress = [
       shippingAddress.company,
@@ -306,8 +473,8 @@ router.post("/orders", async (request, response) => {
          customer_name, email, phone, delivery_address, first_name, last_name, company,
          country_code, address_line1, address_line2, city, province, postal_code,
          shipping_method, payment_method, billing_same_as_shipping, billing_address,
-         marketing_consent, order_note, subtotal, delivery_fee, total, status
-       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending')`,
+         marketing_consent, order_note, promo_code, discount_amount, subtotal, delivery_fee, total, status
+       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending')`,
       [
         customerName,
         normalizedEmail,
@@ -328,11 +495,20 @@ router.post("/orders", async (request, response) => {
         billingAddress ? JSON.stringify(billingAddress) : null,
         Boolean(marketingConsent),
         String(orderNote || "").trim().slice(0, 500) || null,
+        promo?.code || null,
+        discountAmount,
         subtotal,
         deliveryFee,
-        subtotal + deliveryFee
+        total
       ]
     );
+
+    if (promo) {
+      await connection.query(
+        `UPDATE promo_codes SET used_count = used_count + 1 WHERE id = ?`,
+        [promo.id]
+      );
+    }
 
     for (const item of normalizedItems) {
       const variant = variantById.get(item.variantId);
@@ -354,10 +530,13 @@ router.post("/orders", async (request, response) => {
 
     await connection.commit();
     response.status(201).json({
+      message: "Your order has been placed successfully.",
       orderId: orderResult.insertId,
       subtotal,
+      discountAmount,
       deliveryFee,
-      total: subtotal + deliveryFee
+      total,
+      promoCode: promo?.code || null
     });
   } catch (error) {
     await connection.rollback();

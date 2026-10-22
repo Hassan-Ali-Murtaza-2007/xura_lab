@@ -53,6 +53,7 @@ router.get("/orders", requireAdmin, async (request, response) => {
     const [rows] = await pool.query(
       `SELECT o.id, o.customer_name AS customerName, o.email, o.phone, o.city, o.delivery_address AS deliveryAddress,
               o.shipping_method AS shippingMethod, o.payment_method AS paymentMethod, o.order_note AS orderNote,
+              o.promo_code AS promoCode, o.discount_amount AS discountAmount,
               o.subtotal, o.delivery_fee AS deliveryFee, o.total, o.status, o.created_at AS createdAt
        FROM orders o
        ${whereSql}
@@ -129,6 +130,7 @@ router.get("/orders/:id", requireAdmin, async (request, response) => {
               o.address_line1 AS addressLine1, o.address_line2 AS addressLine2, o.city, o.province, o.postal_code AS postalCode,
               o.shipping_method AS shippingMethod, o.payment_method AS paymentMethod, o.billing_same_as_shipping AS billingSameAsShipping,
               o.billing_address AS billingAddress, o.marketing_consent AS marketingConsent, o.order_note AS orderNote,
+              o.promo_code AS promoCode, o.discount_amount AS discountAmount,
               o.subtotal, o.delivery_fee AS deliveryFee, o.total, o.status, o.created_at AS createdAt, o.updated_at AS updatedAt
        FROM orders o WHERE o.id = ? LIMIT 1`,
       [orderId]

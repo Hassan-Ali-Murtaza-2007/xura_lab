@@ -30,7 +30,7 @@ export const productUploadDirectory = process.env.PRODUCT_UPLOAD_DIR
   ? resolve(process.env.PRODUCT_UPLOAD_DIR)
   : resolve(moduleDirectory, "../../../web/public/uploads/products");
 
-export const webOrigin = process.env.WEB_ORIGIN || "http://localhost:3000";
+export const webOrigin = process.env.WEB_ORIGIN || "http://localhost:3007";
 
 export const allowedPaymentMethods = new Set(["cash-on-delivery", "bank-transfer", "card"]);
 export const allowedProductCategories = new Set(["Men", "Women", "Unisex"]);

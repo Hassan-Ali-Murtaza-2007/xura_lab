@@ -1,0 +1,64 @@
+XURALAB PRODUCT PHOTOGRAPHY
+
+Created with the built-in image_gen tool using the user's product reference photographs.
+
+Deliverables
+xuralab-nyra-product.png - 1254 x 1254
+xuralab-velor-product.png - 1254 x 1254
+xuralab-arven-product.png - 1254 x 1254
+xuralab-collection-banner.png - 1672 x 941
+
+Use the square images as product listing images. The collection banner includes empty space on the left for your store's heading.
+
+FINAL PROMPTS
+
+NYRA
+
+Use case: product-mockup.
+Asset type: premium perfume ecommerce product photography, a single finished square 2048 x 2048 photograph.
+Primary request: Transform the supplied handheld reference photo into beautiful, convincingly real luxury studio photography for the Xuralab store.
+Input image role: exact product identity and packaging reference. Treat the product in this image as the actual item to photograph.
+Subject: ONE original slender cylindrical transparent glass travel perfume atomizer, original clear cylindrical protective cap, white translucent spray mechanism and ribbed collar, visible dip tube, clear lightly tinted liquid, tall narrow matte black wrap label with refined pale silver serif lettering. Preserve the original slim travel-vial proportions and construction faithfully; do not turn this into a large conventional perfume bottle.
+Scene/backdrop: seamless soft warm ivory background and matching smooth matte ivory studio surface, a very subtle light gradient. No scenery or ingredients. The vial stands upright naturally on its flat base.
+Composition/framing: square catalog hero, one full bottle including cap and base, large and centered, about 76 percent of the image height, generous balanced negative space, level camera, label directly facing camera. Identical visual system across all three fragrance images.
+Lighting/mood: exquisite large softbox key from upper left, gentle fill, delicate elongated diffuse shadow on the surface to the right, controlled realistic edge reflections on glass, crisp readable label, restrained warm luxury. High-end macro product lens, realistic material detail, no excessive bloom.
+Text: preserve the original black label's design and existing copy from the reference, with the product name replaced only if necessary to read exactly "NYRA" and the brand reading exactly "XURA LAB" at the lower part as in the original. Keep the original elegant serif lettering. Do not invent taglines, ingredients, volume, certifications, or extra writing.
+Constraints: this must resemble the actual affordable-size sample/travel spray in the reference, beautifully photographed. No hands, people, fabric background, additional bottles, boxes, props, flowers, fruit, decorative text, graphic layout, collage, watermark, plastic-looking CGI, altered cap design, enlarged bottle width, or invented packaging. Photorealistic commercial photography.
+
+VELOR
+
+Use case: product-mockup.
+Asset type: premium perfume ecommerce product photography, a single finished square 2048 x 2048 photograph.
+Primary request: Transform the supplied handheld reference photo into beautiful, convincingly real luxury studio photography for the Xuralab store.
+Input image role: exact product identity and packaging reference. Treat the product in this image as the actual item to photograph.
+Subject: ONE original slender cylindrical transparent glass travel perfume atomizer, original clear cylindrical protective cap, white translucent spray mechanism and ribbed collar, visible dip tube, clear lightly tinted liquid, tall narrow matte black wrap label with refined pale silver serif lettering. Preserve the original slim travel-vial proportions and construction faithfully; do not turn this into a large conventional perfume bottle.
+Scene/backdrop: seamless soft warm ivory background and matching smooth matte ivory studio surface, a very subtle light gradient. No scenery or ingredients. The vial stands upright naturally on its flat base.
+Composition/framing: square catalog hero, one full bottle including cap and base, large and centered, about 76 percent of the image height, generous balanced negative space, level camera, label directly facing camera. Identical visual system across all three fragrance images.
+Lighting/mood: exquisite large softbox key from upper left, gentle fill, delicate elongated diffuse shadow on the surface to the right, controlled realistic edge reflections on glass, crisp readable label, restrained warm luxury. High-end macro product lens, realistic material detail, no excessive bloom.
+Text: preserve the original black label's design and existing copy from the reference, with the product name replaced only if necessary to read exactly "VELOR" and the brand reading exactly "XURA LAB" at the lower part as in the original. Keep the original elegant serif lettering. Do not invent taglines, ingredients, volume, certifications, or extra writing.
+Constraints: this must resemble the actual affordable-size sample/travel spray in the reference, beautifully photographed. No hands, people, fabric background, additional bottles, boxes, props, flowers, fruit, decorative text, graphic layout, collage, watermark, plastic-looking CGI, altered cap design, enlarged bottle width, or invented packaging. Photorealistic commercial photography.
+
+ARVEN
+
+Use case: product-mockup.
+Asset type: premium perfume ecommerce product photography, a single finished square 2048 x 2048 photograph.
+Primary request: Transform the supplied handheld reference photo into beautiful, convincingly real luxury studio photography for the Xuralab store.
+Input image role: exact product identity and packaging reference. Treat the product in this image as the actual item to photograph.
+Subject: ONE original slender cylindrical transparent glass travel perfume atomizer, original clear cylindrical protective cap, white translucent spray mechanism and ribbed collar, visible dip tube, clear lightly tinted liquid, tall narrow matte black wrap label with refined pale silver serif lettering. Preserve the original slim travel-vial proportions and construction faithfully; do not turn this into a large conventional perfume bottle.
+Scene/backdrop: seamless soft warm ivory background and matching smooth matte ivory studio surface, a very subtle light gradient. No scenery or ingredients. The vial stands upright naturally on its flat base.
+Composition/framing: square catalog hero, one full bottle including cap and base, large and centered, about 76 percent of the image height, generous balanced negative space, level camera, label directly facing camera. Identical visual system across all three fragrance images.
+Lighting/mood: exquisite large softbox key from upper left, gentle fill, delicate elongated diffuse shadow on the surface to the right, controlled realistic edge reflections on glass, crisp readable label, restrained warm luxury. High-end macro product lens, realistic material detail, no excessive bloom.
+Text: preserve the original black label's design and existing copy from the reference, with the product name replaced only if necessary to read exactly "ARVEN" and the brand reading exactly "XURA LAB" at the lower part as in the original. Keep the original elegant serif lettering. Do not invent taglines, ingredients, volume, certifications, or extra writing.
+Constraints: this must resemble the actual affordable-size sample/travel spray in the reference, beautifully photographed. No hands, people, fabric background, additional bottles, boxes, props, flowers, fruit, decorative text, graphic layout, collage, watermark, plastic-looking CGI, altered cap design, enlarged bottle width, or invented packaging. Photorealistic commercial photography.
+
+COLLECTION
+
+Use case: product-mockup.
+Asset type: premium Xuralab perfume store collection hero banner, landscape 16:9, 2560 x 1440.
+Primary request: Create one exquisite photorealistic campaign photograph showing the three supplied perfumes together in a coherent warm ivory studio.
+Input images: image 1 is NYRA, image 2 is VELOR, image 3 is ARVEN. These are product identity and styling references. Preserve their actual clear slender travel atomizer bottles, transparent caps, translucent white ribbed pump collars, thin dip tubes, pale liquid, black wrap labels and fine silver serif type. All three vials have the same real physical size.
+Scene: refined warm ivory seamless studio with a low pale limestone rectangular plinth and a second subtly taller stone block behind it. Three real bottles standing firmly on the blocks, grouped gracefully in the right 58 percent of the image: NYRA left in the group, VELOR middle, ARVEN right. Each front label fully visible and faces the camera, whole bottles uncropped. Natural depth and slightly staggered heights with the middle vial a little elevated; no occlusion.
+Composition: wide editorial still life, elegant visual balance, left 38 percent reserved as smooth clean ivory negative space for a store headline to be added later. Keep plenty of room around caps. The group occupies much of the height and remains legible. Camera at label height with a very slight view of the stone tops.
+Lighting: diffused warm daylight from upper left, gentle atmospheric falloff, elegant soft directional shadows, restrained luminous glass reflections, subtle realistic caustics, detailed matte black paper labels, tactile pale stone. Professional luxury perfume photography, natural optics and believable materials.
+Exact product text only on labels: "NYRA" with "XURA LAB"; "VELOR" with "XURA LAB"; "ARVEN" with "XURA LAB". Preserve the lettering style from supplied photos, no added tagline or copy.
+Constraints: exactly three original slim travel-spray bottles, no packaging redesign, no boxes, no hands, no fruit, no flowers, no ingredients, no extra products, no decorative lettering, no headline, no watermark, no collage, no artificial CGI appearance. A single unified photographic scene.

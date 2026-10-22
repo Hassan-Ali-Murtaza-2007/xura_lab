@@ -1,0 +1,52 @@
+XURALAB FULL-SIZE PERFUME DUO BUNDLES
+
+Created with the built-in image_gen tool from the user's actual full-size bottle reference.
+
+Deliverables: three square PNGs, each 1254 x 1254 pixels.
+Nyra + Velor: two full-size bottles.
+Nyra + Arven: two full-size bottles.
+Velor + Arven: two full-size bottles.
+
+FINAL PROMPTS
+
+NYRA + VELOR
+
+Use case: product-mockup.
+Asset type: one square ecommerce main product photograph of a two-full-size-bottle Xuralab perfume bundle.
+Primary request: Create a beautiful luxury studio product image of exactly TWO full-size perfumes: NYRA on the left and VELOR on the right, photographed together as a matched duo.
+Input image role: the supplied image is the exact full-size bottle and label reference. Select only the two fragrances NYRA and VELOR from it and faithfully preserve their actual packaging.
+Packaging: Both bottles have the SAME real size, shape and proportions. Short broad cylindrical smoky charcoal frosted-glass bodies, gently rounded shoulders and bottom edges, substantial polished jet-black capsule dome caps, and wide warm ivory wrap labels. Match the supplied reference faithfully. Overall bottle height including the cap is approximately 1.6 times the body width. Each dome cap is around 36 percent of the total height and about 60 percent of the bottle body's width. Glass is dark and frosted, the dome cap is mirror-smooth glossy black. Preserve the original packaging construction and refined label typography.
+Left bottle label exact text, in three levels as in the reference: large elegant dark serif "NYRA", small sans-serif "a beautiful kind of obsession" underneath, and dark serif "XURA LAB" lower down.
+Right bottle label exact text, same typography and hierarchy: large elegant dark serif "VELOR", small sans-serif "beyond the ordinary" underneath, and dark serif "XURA LAB" lower down.
+Composition: two complete upright bottles standing side by side on the same flat surface, exactly the same height and baseline. Center the pair as one balanced group in a square frame. Equal visual weight, clean small gap between bottles, no overlap, both labels face directly toward camera and are completely readable. Each bottle fills around 66 percent of the image height. Comfortable margins all around, full caps and bases visible, natural eye-level product lens perspective.
+Scene/backdrop: seamless warm ivory background and matching smooth matte ivory tabletop with a subtle light gradient, consistent with a minimal premium perfume store catalog. No extra objects.
+Lighting/mood: large soft diffused key light from upper left, gentle fill, soft grounded shadows to the right, exquisite controlled highlights on the dome caps, tactile frosted dark glass, fine paper label texture. Warm restrained luxury, convincing professional commercial product photography, crisp legible labels and natural material detail.
+Constraints: exactly two FULL-SIZE perfumes, NYRA and VELOR, each appearing once. No third perfume, no testers, no travel sprays, no miniature bottles, no clear atomizers, no black tester labels, no boxes or gift wrapping, no podiums, no flowers, coffee beans, amber pieces, ingredients, hands, badge, price, added copy, watermark, collage, cropped caps or bases. Do not invent milliliter quantities. Preserve the actual packaging. Square format, a single unified photographic scene.
+
+NYRA + ARVEN
+
+Use case: product-mockup.
+Asset type: one square ecommerce main product photograph of a two-full-size-bottle Xuralab perfume bundle.
+Primary request: Create a beautiful luxury studio product image of exactly TWO full-size perfumes: NYRA on the left and ARVEN on the right, photographed together as a matched duo.
+Input image role: the supplied image is the exact full-size bottle and label reference. Select only the two fragrances NYRA and ARVEN from it and faithfully preserve their actual packaging.
+Packaging: Both bottles have the SAME real size, shape and proportions. Short broad cylindrical smoky charcoal frosted-glass bodies, gently rounded shoulders and bottom edges, substantial polished jet-black capsule dome caps, and wide warm ivory wrap labels. Match the supplied reference faithfully. Overall bottle height including the cap is approximately 1.6 times the body width. Each dome cap is around 36 percent of the total height and about 60 percent of the bottle body's width. Glass is dark and frosted, the dome cap is mirror-smooth glossy black. Preserve the original packaging construction and refined label typography.
+Left bottle label exact text, in three levels as in the reference: large elegant dark serif "NYRA", small sans-serif "a beautiful kind of obsession" underneath, and dark serif "XURA LAB" lower down.
+Right bottle label exact text, same typography and hierarchy: large elegant dark serif "ARVEN", small sans-serif "the art of leaving an impression" underneath, and dark serif "XURA LAB" lower down.
+Composition: two complete upright bottles standing side by side on the same flat surface, exactly the same height and baseline. Center the pair as one balanced group in a square frame. Equal visual weight, clean small gap between bottles, no overlap, both labels face directly toward camera and are completely readable. Each bottle fills around 66 percent of the image height. Comfortable margins all around, full caps and bases visible, natural eye-level product lens perspective.
+Scene/backdrop: seamless warm ivory background and matching smooth matte ivory tabletop with a subtle light gradient, consistent with a minimal premium perfume store catalog. No extra objects.
+Lighting/mood: large soft diffused key light from upper left, gentle fill, soft grounded shadows to the right, exquisite controlled highlights on the dome caps, tactile frosted dark glass, fine paper label texture. Warm restrained luxury, convincing professional commercial product photography, crisp legible labels and natural material detail.
+Constraints: exactly two FULL-SIZE perfumes, NYRA and ARVEN, each appearing once. No third perfume, no testers, no travel sprays, no miniature bottles, no clear atomizers, no black tester labels, no boxes or gift wrapping, no podiums, no flowers, coffee beans, amber pieces, ingredients, hands, badge, price, added copy, watermark, collage, cropped caps or bases. Do not invent milliliter quantities. Preserve the actual packaging. Square format, a single unified photographic scene.
+
+VELOR + ARVEN
+
+Use case: product-mockup.
+Asset type: one square ecommerce main product photograph of a two-full-size-bottle Xuralab perfume bundle.
+Primary request: Create a beautiful luxury studio product image of exactly TWO full-size perfumes: VELOR on the left and ARVEN on the right, photographed together as a matched duo.
+Input image role: the supplied image is the exact full-size bottle and label reference. Select only the two fragrances VELOR and ARVEN from it and faithfully preserve their actual packaging.
+Packaging: Both bottles have the SAME real size, shape and proportions. Short broad cylindrical smoky charcoal frosted-glass bodies, gently rounded shoulders and bottom edges, substantial polished jet-black capsule dome caps, and wide warm ivory wrap labels. Match the supplied reference faithfully. Overall bottle height including the cap is approximately 1.6 times the body width. Each dome cap is around 36 percent of the total height and about 60 percent of the bottle body's width. Glass is dark and frosted, the dome cap is mirror-smooth glossy black. Preserve the original packaging construction and refined label typography.
+Left bottle label exact text, in three levels as in the reference: large elegant dark serif "VELOR", small sans-serif "beyond the ordinary" underneath, and dark serif "XURA LAB" lower down.
+Right bottle label exact text, same typography and hierarchy: large elegant dark serif "ARVEN", small sans-serif "the art of leaving an impression" underneath, and dark serif "XURA LAB" lower down.
+Composition: two complete upright bottles standing side by side on the same flat surface, exactly the same height and baseline. Center the pair as one balanced group in a square frame. Equal visual weight, clean small gap between bottles, no overlap, both labels face directly toward camera and are completely readable. Each bottle fills around 66 percent of the image height. Comfortable margins all around, full caps and bases visible, natural eye-level product lens perspective.
+Scene/backdrop: seamless warm ivory background and matching smooth matte ivory tabletop with a subtle light gradient, consistent with a minimal premium perfume store catalog. No extra objects.
+Lighting/mood: large soft diffused key light from upper left, gentle fill, soft grounded shadows to the right, exquisite controlled highlights on the dome caps, tactile frosted dark glass, fine paper label texture. Warm restrained luxury, convincing professional commercial product photography, crisp legible labels and natural material detail.
+Constraints: exactly two FULL-SIZE perfumes, VELOR and ARVEN, each appearing once. No third perfume, no testers, no travel sprays, no miniature bottles, no clear atomizers, no black tester labels, no boxes or gift wrapping, no podiums, no flowers, coffee beans, amber pieces, ingredients, hands, badge, price, added copy, watermark, collage, cropped caps or bases. Do not invent milliliter quantities. Preserve the actual packaging. Square format, a single unified photographic scene.

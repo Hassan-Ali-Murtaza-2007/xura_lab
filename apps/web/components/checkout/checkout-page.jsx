@@ -97,6 +97,12 @@ export default function CheckoutPage() {
   const [submitting, setSubmitting] = useState(false);
   const [confirmedOrder, setConfirmedOrder] = useState(null);
 
+  // Promo code state
+  const [promoInput, setPromoInput] = useState("");
+  const [appliedPromo, setAppliedPromo] = useState(null);
+  const [promoError, setPromoError] = useState("");
+  const [promoLoading, setPromoLoading] = useState(false);
+
   useEffect(() => {
     const stored = window.localStorage.getItem("xura-cart");
     if (stored) {
@@ -113,7 +119,75 @@ export default function CheckoutPage() {
     () => cart.reduce((total, item) => total + Number(item.price) * item.quantity, 0),
     [cart]
   );
-  const total = subtotal + DELIVERY_FEE;
+
+  const isAdvance = paymentMode === "advance";
+  const deliveryFee = isAdvance ? 0 : DELIVERY_FEE;
+
+  // Calculate discount based on eligible products in cart
+  const discountAmount = useMemo(() => {
+    if (!appliedPromo) return 0;
+
+    let eligibleSubtotal = subtotal;
+    if (appliedPromo.appliesTo === "specific" && Array.isArray(appliedPromo.applicableProductIds)) {
+      const applicableIds = appliedPromo.applicableProductIds.map(Number);
+      eligibleSubtotal = cart
+        .filter((item) => applicableIds.includes(Number(item.id)))
+        .reduce((sum, item) => sum + Number(item.price) * item.quantity, 0);
+    }
+
+    if (eligibleSubtotal <= 0) return 0;
+
+    if (appliedPromo.discountType === "percentage") {
+      let discount = Math.round((eligibleSubtotal * appliedPromo.discountValue) / 100);
+      if (appliedPromo.maxDiscountAmount && discount > appliedPromo.maxDiscountAmount) {
+        discount = appliedPromo.maxDiscountAmount;
+      }
+      return discount;
+    }
+    return Math.min(eligibleSubtotal, appliedPromo.discountValue);
+  }, [appliedPromo, subtotal, cart]);
+
+  const total = Math.max(0, subtotal - discountAmount) + deliveryFee;
+
+  async function handleApplyPromo(e) {
+    e.preventDefault();
+    const code = promoInput.trim().toUpperCase();
+    if (!code) return;
+
+    setPromoLoading(true);
+    setPromoError("");
+
+    try {
+      const response = await fetch("/api/promo-codes/validate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          code,
+          subtotal,
+          items: cart.map((item) => ({
+            productId: item.id,
+            price: item.price,
+            quantity: item.quantity
+          }))
+        })
+      });
+      const data = await response.json();
+      if (!response.ok || !data.valid) {
+        throw new Error(data.message || "Invalid promo code.");
+      }
+      setAppliedPromo(data);
+      setPromoInput("");
+    } catch (err) {
+      setPromoError(err.message);
+    } finally {
+      setPromoLoading(false);
+    }
+  }
+
+  function handleRemovePromo() {
+    setAppliedPromo(null);
+    setPromoError("");
+  }
 
   async function submitOrder(event) {
     event.preventDefault();
@@ -132,6 +206,7 @@ export default function CheckoutPage() {
       billingSameAsShipping: billingSame,
       billingAddress: billingSame ? null : formAddress(formData, "billing"),
       orderNote: formData.get("orderNote"),
+      promoCode: appliedPromo?.code || null,
       items: cart.map((item) => ({
         productId: item.id,
         variantId: item.variantId || null,
@@ -175,6 +250,16 @@ export default function CheckoutPage() {
         <div className="checkout-confirmation-total">
           <span>Order total</span><strong>{money(confirmedOrder.total)}</strong>
         </div>
+        {confirmedOrder.promoCode && (
+          <p className="checkout-confirmation-benefit">
+            Promo code <strong>{confirmedOrder.promoCode}</strong> applied (-{money(confirmedOrder.discountAmount)})
+          </p>
+        )}
+        {confirmedOrder.deliveryFee === 0 && (
+          <p className="checkout-confirmation-benefit checkout-free-shipping-tag">
+            ✓ Complimentary free delivery applied for advance payment
+          </p>
+        )}
         <Link className="checkout-return-button" href="/">CONTINUE SHOPPING</Link>
       </main>
     );
@@ -244,8 +329,27 @@ export default function CheckoutPage() {
               </div>
               <label className="checkout-choice is-selected">
                 <input type="radio" name="shippingMethod" value="standard" defaultChecked />
-                <span><strong>Standard delivery</strong><small>3–5 business days</small></span>
-                <b>{money(DELIVERY_FEE)}</b>
+                <span>
+                  <strong>
+                    Standard delivery
+                    {isAdvance && <span className="checkout-free-badge">FREE SHIPPING</span>}
+                  </strong>
+                  <small>
+                    {isAdvance
+                      ? "3–5 business days · Complimentary free delivery with advance payment"
+                      : "3–5 business days"}
+                  </small>
+                </span>
+                <b>
+                  {isAdvance ? (
+                    <span className="checkout-shipping-free-val">
+                      <span className="free-tag">FREE</span>
+                      <s>{money(DELIVERY_FEE)}</s>
+                    </span>
+                  ) : (
+                    money(DELIVERY_FEE)
+                  )}
+                </b>
               </label>
             </section>
 
@@ -257,7 +361,13 @@ export default function CheckoutPage() {
               <div className="checkout-payment-list">
                 <label className={`checkout-choice ${paymentMode === "advance" ? "is-selected" : ""}`}>
                   <input type="radio" name="paymentMode" value="advance" checked={paymentMode === "advance"} onChange={() => setPaymentMode("advance")} />
-                  <span><strong>Advance</strong><small>Pay before your order is dispatched.</small></span>
+                  <span>
+                    <strong>
+                      Advance Payment
+                      <span className="checkout-free-badge">FREE DELIVERY</span>
+                    </strong>
+                    <small>Pay in advance and get 100% free courier delivery nationwide.</small>
+                  </span>
                 </label>
                 {paymentMode === "advance" && (
                   <div className="checkout-payment-suboptions" role="radiogroup" aria-label="Advance payment method">
@@ -273,7 +383,10 @@ export default function CheckoutPage() {
                 )}
                 <label className={`checkout-choice ${paymentMode === "cash-on-delivery" ? "is-selected" : ""}`}>
                   <input type="radio" name="paymentMode" value="cash-on-delivery" checked={paymentMode === "cash-on-delivery"} onChange={() => setPaymentMode("cash-on-delivery")} />
-                  <span><strong>Cash on Delivery</strong><small>Pay in cash when your fragrance arrives.</small></span>
+                  <span>
+                    <strong>Cash on Delivery</strong>
+                    <small>Pay in cash when your fragrance arrives. Standard courier delivery fee (PKR 370) applies.</small>
+                  </span>
                 </label>
               </div>
               <p className="checkout-security-note">For your security, Xura Lab never asks for or stores card numbers or CVVs on this page.</p>
@@ -335,10 +448,108 @@ export default function CheckoutPage() {
                 </div>
               ))}
             </div>
+
+            {/* Promo Code Input Section */}
+            <div className="checkout-promo-box">
+              {appliedPromo ? (
+                <div className="checkout-promo-applied">
+                  <div className="checkout-promo-info">
+                    <span className="checkout-promo-tag-icon">🏷️</span>
+                    <div>
+                      <div className="checkout-promo-code-text">
+                        <strong>{appliedPromo.code}</strong>
+                        <span className="checkout-promo-value-badge">
+                          {appliedPromo.discountType === "percentage"
+                            ? `${appliedPromo.discountValue}% OFF`
+                            : `PKR ${appliedPromo.discountValue} OFF`}
+                        </span>
+                      </div>
+                      <small className="checkout-promo-savings">
+                        You save {money(discountAmount)}
+                        {appliedPromo.appliesTo === "specific" && " (on eligible items)"}
+                      </small>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    className="checkout-promo-remove-btn"
+                    onClick={handleRemovePromo}
+                    aria-label="Remove promo code"
+                  >
+                    Remove
+                  </button>
+                </div>
+              ) : (
+                <div className="checkout-promo-form">
+                  <div className="checkout-promo-input-wrap">
+                    <input
+                      type="text"
+                      className="checkout-promo-input"
+                      placeholder="Enter promo code"
+                      value={promoInput}
+                      onChange={(e) => {
+                        setPromoInput(e.target.value.toUpperCase());
+                        if (promoError) setPromoError("");
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          handleApplyPromo(e);
+                        }
+                      }}
+                      disabled={promoLoading}
+                      aria-label="Promo code"
+                    />
+                    <button
+                      type="button"
+                      className="checkout-promo-apply-btn"
+                      onClick={handleApplyPromo}
+                      disabled={promoLoading || !promoInput.trim()}
+                    >
+                      {promoLoading ? "APPLYING…" : "APPLY"}
+                    </button>
+                  </div>
+                </div>
+              )}
+              {promoError && <p className="checkout-promo-msg is-error">{promoError}</p>}
+              {appliedPromo?.message && !promoError && (
+                <p className="checkout-promo-msg is-success">{appliedPromo.message}</p>
+              )}
+            </div>
+
             <dl className="checkout-totals">
-              <div><dt>Subtotal</dt><dd>{money(subtotal)}</dd></div>
-              <div><dt>Shipping</dt><dd>{money(DELIVERY_FEE)}</dd></div>
-              <div><dt>Total</dt><dd><small>PKR</small>{money(total).replace("PKR ", "")}</dd></div>
+              <div>
+                <dt>Subtotal</dt>
+                <dd>{money(subtotal)}</dd>
+              </div>
+              {appliedPromo && (
+                <div className="checkout-promo-row">
+                  <dt>
+                    Promo code (<span className="checkout-promo-applied-code">{appliedPromo.code}</span>)
+                  </dt>
+                  <dd className="checkout-discount-val">- {money(discountAmount)}</dd>
+                </div>
+              )}
+              <div>
+                <dt>Shipping</dt>
+                <dd>
+                  {isAdvance ? (
+                    <span className="checkout-free-shipping-display">
+                      <span className="checkout-free-pill">FREE</span>
+                      <s>{money(DELIVERY_FEE)}</s>
+                    </span>
+                  ) : (
+                    money(DELIVERY_FEE)
+                  )}
+                </dd>
+              </div>
+              <div>
+                <dt>Total</dt>
+                <dd>
+                  <small>PKR</small>
+                  {money(total).replace("PKR ", "")}
+                </dd>
+              </div>
             </dl>
             <p className="checkout-summary-help">Need help with your order? <a href="https://wa.me/923129181720" target="_blank" rel="noreferrer">WhatsApp Xura Lab</a>.</p>
           </div>

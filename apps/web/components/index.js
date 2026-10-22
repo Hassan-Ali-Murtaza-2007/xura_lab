@@ -5,6 +5,7 @@ export { default as AdminLogin } from "./admin/admin-login";
 export { default as AdminOrders } from "./admin/admin-orders";
 export { default as AdminProductForm } from "./admin/admin-product-form";
 export { default as AdminProducts } from "./admin/admin-products";
+export { default as AdminPromos } from "./admin/admin-promos";
 export { default as AdminSidebar } from "./admin/admin-sidebar";
 
 // Storefront components

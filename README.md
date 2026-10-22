@@ -22,7 +22,7 @@ A faithful full-stack implementation of the supplied Xura Lab landing-page desig
    npm run dev
    ```
 
-3. Open `http://localhost:3000`.
+3. Open `http://localhost:3007`.
 
 The product catalogue works without a database by using the API's persistent local catalogue. Products created in the admin panel are stored in `apps/api/data` and their uploaded images are stored in `apps/web/public/uploads/products`. To enable shared production catalogue and order storage, create a MySQL database, run `database/schema.sql`, copy `apps/api/.env.example` to `apps/api/.env`, and set your credentials. Then run `npm run db:seed`.
 
@@ -32,16 +32,16 @@ For an existing database, also run `database/migrations/003_product_content_and_
 
 ## Product pages
 
-- `http://localhost:3000/products/arven`
-- `http://localhost:3000/products/velor`
-- `http://localhost:3000/products/nyra`
+- `http://localhost:3007/products/arven`
+- `http://localhost:3007/products/velor`
+- `http://localhost:3007/products/nyra`
 
 Each product page supports 10%, 20%, and 40% concentration variants, quantity selection, cart persistence, and checkout.
 
 ## Collections
 
 - Homepage preview: three products per desktop view with horizontal overflow for the remaining catalogue; mobile shows at most four products for the selected category.
-- Full catalogue: `http://localhost:3000/collections` shows every available product with category, search, and sorting controls.
+- Full catalogue: `http://localhost:3007/collections` shows every available product with category, search, and sorting controls.
 
 ## Main endpoints
 
@@ -54,8 +54,8 @@ Each product page supports 10%, 20%, and 40% concentration variants, quantity se
 
 ## Admin panel
 
-- Login: `http://localhost:3000/admin/login`
-- Dashboard: `http://localhost:3000/admin`
+- Login: `http://localhost:3007/admin/login`
+- Dashboard: `http://localhost:3007/admin`
 
 For local development only, the API falls back to `admin@xuralab.com` / `XuraLab@2026`. Set `ADMIN_EMAIL`, `ADMIN_PASSWORD`, and a long random `ADMIN_SESSION_SECRET` in `apps/api/.env` before deployment. Production mode does not enable the fallback credentials.
 
