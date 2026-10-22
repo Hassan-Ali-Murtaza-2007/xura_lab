@@ -46,7 +46,7 @@ router.get("/dashboard", requireAdmin, async (request, response) => {
   }
 
   try {
-    const [productStatsResult, orderStatsResult, recentOrdersResult, productsResult] = await Promise.all([
+    const [productStatsResult, orderStatsResult, recentOrdersResult, productsResult, promoStatsResult] = await Promise.all([
       pool.query("SELECT COUNT(*) AS totalProducts FROM products WHERE is_active = TRUE"),
       pool.query(`SELECT COUNT(*) AS totalOrders,
                          COALESCE(SUM(status = 'pending'), 0) AS pendingOrders,
@@ -61,10 +61,14 @@ router.get("/dashboard", requireAdmin, async (request, response) => {
                   LEFT JOIN product_variants pv ON pv.product_id = p.id AND pv.is_active = TRUE
                   WHERE p.is_active = TRUE
                   GROUP BY p.id, p.slug, p.name, p.gender, p.image_url, p.is_active, p.price
-                  ORDER BY p.sort_order ASC, p.id ASC`)
+                  ORDER BY p.sort_order ASC, p.id ASC`),
+      pool.query(`SELECT COUNT(*) AS totalPromos,
+                         COALESCE(SUM(is_active = TRUE AND (expires_at IS NULL OR expires_at > NOW())), 0) AS activePromos
+                  FROM promo_codes`).catch(() => [[{ totalPromos: 0, activePromos: 0 }]])
     ]);
     const productStats = productStatsResult[0][0] || {};
     const orderStats = orderStatsResult[0][0] || {};
+    const promoStats = promoStatsResult?.[0]?.[0] || {};
     const recentOrders = recentOrdersResult[0];
     const products = productsResult[0];
     response.json({
@@ -74,7 +78,9 @@ router.get("/dashboard", requireAdmin, async (request, response) => {
         totalProducts: Number(productStats.totalProducts || 0),
         totalOrders: Number(orderStats.totalOrders || 0),
         pendingOrders: Number(orderStats.pendingOrders || 0),
-        revenue: Number(orderStats.revenue || 0)
+        revenue: Number(orderStats.revenue || 0),
+        totalPromos: Number(promoStats.totalPromos || 0),
+        activePromos: Number(promoStats.activePromos || 0)
       },
       recentOrders,
       products

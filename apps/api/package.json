@@ -6,7 +6,9 @@
   "scripts": {
     "dev": "node --watch src/index.js",
     "start": "node src/index.js",
-    "db:seed": "node src/seed.js"
+    "db:seed": "node src/seed.js",
+    "db:repair-checkout": "node src/repair-checkout.js",
+    "test:checkout": "node --test test/checkout.integration.test.js"
   },
   "dependencies": {
     "cors": "^2.8.5",

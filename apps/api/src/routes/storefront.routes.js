@@ -540,6 +540,10 @@ router.post("/orders", async (request, response) => {
     });
   } catch (error) {
     await connection.rollback();
+    console.error("Order creation failed:", {
+      code: error.code,
+      message: error.sqlMessage || error.message
+    });
     response.status(error.statusCode || 500).json({
       message: error.statusCode ? error.message : "The order could not be saved. Please try again."
     });
