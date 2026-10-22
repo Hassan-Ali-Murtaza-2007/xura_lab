@@ -10,7 +10,7 @@ import { BRAND_CONTACT, POLICIES_DATA, POLICIES_LIST } from "@/data/policies";
 
 function SearchIcon() {
   return (
-    <svg viewBox="0 0 24 24" aria-hidden="true">
+    <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" strokeWidth="1.35" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
       <circle cx="11" cy="11" r="6.5" />
       <path d="m16 16 4 4" />
     </svg>
@@ -19,7 +19,7 @@ function SearchIcon() {
 
 function BagIcon() {
   return (
-    <svg viewBox="0 0 24 24" aria-hidden="true">
+    <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" strokeWidth="1.35" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
       <path d="M6 8.5h12l1 12H5l1-12Z" />
       <path d="M9 9V6.5a3 3 0 0 1 6 0V9" />
     </svg>
@@ -28,7 +28,7 @@ function BagIcon() {
 
 function CloseIcon() {
   return (
-    <svg viewBox="0 0 24 24" aria-hidden="true">
+    <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" strokeWidth="1.35" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
       <path d="m5 5 14 14M19 5 5 19" />
     </svg>
   );
@@ -110,47 +110,46 @@ export default function PolicyPageView({ initialSlug = "privacy-policy" }) {
 
   return (
     <div className="policy-page">
-      {/* Primary Luxury Header */}
-      <header className="site-header site-header-sticky">
-        <div className="shell header-inner">
-          <Link className="brand-link" href="/" aria-label="Xura Lab Home">
-            <span className="brand-title">XURA LAB</span>
-            <span className="brand-subtitle">RAWALPINDI</span>
-          </Link>
-
-          <form className="header-search" onSubmit={handleSearchSubmit}>
+      {/* Standard Sitewide Header */}
+      <header className="site-header">
+        <div className="header-primary shell">
+          <form className="search-control" onSubmit={handleSearchSubmit}>
             <SearchIcon />
+            <label className="sr-only" htmlFor="policy-search">Search fragrances</label>
             <input
+              id="policy-search"
               type="search"
-              placeholder="Search fragrances, concentrations…"
+              placeholder="Search"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               aria-label="Search collection"
             />
           </form>
 
-          <div className="header-actions">
-            <button
-              className="bag-button"
-              type="button"
-              onClick={() => setCartOpen(true)}
-              aria-label={`Open shopping bag, ${cartCount} items`}
-            >
-              <BagIcon />
-              <span className="bag-label">Bag</span>
-              <span className="bag-count">({cartCount})</span>
-            </button>
+          <Link className="wordmark" href="/" aria-label="Xura Lab home">
+            <span>XURA LAB</span>
+            <small>FRAGRANCE</small>
+          </Link>
 
-            <button
-              className="menu-button"
-              type="button"
-              onClick={() => setMobileOpen((value) => !value)}
-              aria-expanded={mobileOpen}
-              aria-label={mobileOpen ? "Close menu" : "Open menu"}
-            >
-              {mobileOpen ? <CloseIcon /> : <span className="menu-bars" />}
-            </button>
-          </div>
+          <button
+            className="cart-trigger"
+            type="button"
+            onClick={() => setCartOpen(true)}
+            aria-label={`Open shopping bag, ${cartCount} items`}
+          >
+            <BagIcon />
+            <span>Cart ({cartCount})</span>
+          </button>
+
+          <button
+            className="menu-trigger"
+            type="button"
+            onClick={() => setMobileOpen(true)}
+            aria-label="Open menu"
+          >
+            <span />
+            <span />
+          </button>
         </div>
 
         <nav className="desktop-nav" aria-label="Primary navigation">
@@ -161,31 +160,27 @@ export default function PolicyPageView({ initialSlug = "privacy-policy" }) {
           <Link href="/?gender=Women#collection">Women</Link>
           <Link href="/about">About us</Link>
           <Link href="/contact">Contact us</Link>
-          <Link className="is-active" href="/policies">Policies</Link>
+          <Link className="is-active" href="/policies" aria-current="page">Policies</Link>
         </nav>
       </header>
 
-      {/* Mobile Drawer Menu */}
-      {mobileOpen && (
-        <div className="mobile-drawer" role="dialog" aria-modal="true">
-          <div className="shell mobile-drawer-inner">
-            <nav className="mobile-nav" aria-label="Mobile navigation">
-              <Link href="/" onClick={() => setMobileOpen(false)}>Home</Link>
-              <Link href="/collections" onClick={() => setMobileOpen(false)}>Complete Collection</Link>
-              <Link href="/?gender=Men#collection" onClick={() => setMobileOpen(false)}>Men</Link>
-              <Link href="/?gender=Unisex#collection" onClick={() => setMobileOpen(false)}>Unisex</Link>
-              <Link href="/?gender=Women#collection" onClick={() => setMobileOpen(false)}>Women</Link>
-              <Link href="/about" onClick={() => setMobileOpen(false)}>About Xura Lab</Link>
-              <Link href="/contact" onClick={() => setMobileOpen(false)}>Contact & Assistance</Link>
-              <Link className="is-active" href="/policies" onClick={() => setMobileOpen(false)}>Policies & Client Care</Link>
-            </nav>
-            <div className="mobile-drawer-footer">
-              <p>RAWALPINDI · PAKISTAN</p>
-              <a href={`tel:${BRAND_CONTACT.formattedPhone}`}>{BRAND_CONTACT.formattedPhone}</a>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Sitewide Mobile Menu */}
+      <div className={`mobile-menu ${mobileOpen ? "is-open" : ""}`} aria-hidden={!mobileOpen}>
+        <button className="mobile-menu-scrim" type="button" onClick={() => setMobileOpen(false)} aria-label="Close navigation" />
+        <nav aria-label="Mobile navigation">
+          <button className="icon-button" type="button" onClick={() => setMobileOpen(false)} aria-label="Close navigation">
+            <CloseIcon />
+          </button>
+          <Link href="/" onClick={() => setMobileOpen(false)}>Home</Link>
+          <Link href="/collections" onClick={() => setMobileOpen(false)}>Collection</Link>
+          <Link href="/?gender=Men#collection" onClick={() => setMobileOpen(false)}>Men</Link>
+          <Link href="/?gender=Unisex#collection" onClick={() => setMobileOpen(false)}>Unisex</Link>
+          <Link href="/?gender=Women#collection" onClick={() => setMobileOpen(false)}>Women</Link>
+          <Link href="/about" onClick={() => setMobileOpen(false)}>About us</Link>
+          <Link href="/contact" onClick={() => setMobileOpen(false)}>Contact us</Link>
+          <Link className="is-active" href="/policies" onClick={() => setMobileOpen(false)}>Policies</Link>
+        </nav>
+      </div>
 
       <main className="policy-main">
         {/* Editorial Hero Banner */}

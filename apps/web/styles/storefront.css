@@ -371,7 +371,8 @@ img {
 
 .search-control svg,
 .cart-trigger svg,
-.icon-button svg {
+.icon-button svg,
+.site-header svg {
   width: 17px;
   height: 17px;
   fill: none;
