@@ -509,6 +509,34 @@
   margin-right: auto;
 }
 
+.checkout-footer a {
+  color: #555f58;
+  text-decoration: none;
+  transition: color 140ms ease;
+}
+
+.checkout-footer a:hover {
+  color: var(--ink);
+  text-decoration: underline;
+}
+
+.checkout-consent-note {
+  margin: 14px 0 0;
+  font-size: 11px;
+  line-height: 1.55;
+  color: #727a75;
+  text-align: center;
+}
+
+.checkout-consent-note a {
+  color: var(--ink);
+  text-decoration: underline;
+}
+
+.checkout-consent-note a:hover {
+  color: #1a221e;
+}
+
 .checkout-loading,
 .checkout-empty,
 .checkout-confirmation {

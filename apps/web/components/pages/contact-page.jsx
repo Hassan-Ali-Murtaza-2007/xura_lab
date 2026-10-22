@@ -226,25 +226,49 @@ export default function ContactPage() {
             </div>
             <span className="footer-brand-tagline">FRAGRANCE</span>
           </div>
-          <div className="footer-column">
-            <h3>Contact</h3>
-            <a href="tel:+923129181720">+92 312 9181720</a>
-            <a href="mailto:contact@xuralab.com">contact@xuralab.com</a>
-          </div>
+
           <div className="footer-column footer-shop">
             <h3>Shop</h3>
+            <Link href="/collections">All Fragrances</Link>
             <Link href="/?gender=Men#collection">Men</Link>
             <Link href="/?gender=Unisex#collection">Unisex</Link>
             <Link href="/?gender=Women#collection">Women</Link>
           </div>
+
+          <div className="footer-column footer-policies">
+            <h3>Client Care</h3>
+            <Link href="/policies/privacy-policy">Privacy Policy</Link>
+            <Link href="/policies/refund-policy">Return & Refund Policy</Link>
+            <Link href="/policies/shipping-policy">Shipping & Delivery</Link>
+            <Link href="/policies/terms-of-service">Terms & Conditions</Link>
+          </div>
+
+          <div className="footer-column footer-contact">
+            <h3>Contact</h3>
+            <a href="tel:+923129181720">+92 312 9181720</a>
+            <a href="https://wa.me/923129181720" target="_blank" rel="noreferrer">WhatsApp: 0312 9181720</a>
+            <a href="mailto:contact@xuralab.com">contact@xuralab.com</a>
+            <small style={{ color: "#777a74", marginTop: "4px" }}>Nussah town khanna pul Rawalpindi</small>
+          </div>
+
           <div className="footer-column footer-social">
             <h3>Social</h3>
-            <a href="https://x.com/" target="_blank" rel="noreferrer">Twitter</a>
             <a href="https://instagram.com/xura.lab" target="_blank" rel="noreferrer">Instagram</a>
+            <a href="https://x.com/" target="_blank" rel="noreferrer">Twitter</a>
             <a href="https://facebook.com/" target="_blank" rel="noreferrer">Facebook</a>
             <a href="https://tiktok.com/" target="_blank" rel="noreferrer">TikTok</a>
           </div>
-          <p className="copyright">© 2026 Xura Lab. All prices in PKR.</p>
+
+          <div className="copyright-row">
+            <p className="copyright">© 2026 Xura Lab. All prices in PKR. Registered in Rawalpindi, Pakistan.</p>
+            <div className="copyright-links">
+              <Link href="/policies/privacy-policy">Privacy</Link>
+              <span>·</span>
+              <Link href="/policies/terms-of-service">Terms</Link>
+              <span>·</span>
+              <Link href="/policies/refund-policy">Refunds</Link>
+            </div>
+          </div>
         </div>
       </footer>
 

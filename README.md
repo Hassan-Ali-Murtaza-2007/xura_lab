@@ -30,6 +30,22 @@ If the database was created before the dedicated checkout page was added, run `d
 
 For an existing database, also run `database/migrations/003_product_content_and_images.sql` before using admin product creation. It adds customer-facing product details and the product image gallery.
 
+### Repair checkout after upgrading an existing database
+
+The promotion feature also requires migrations 004 and 005. Checkout writes `orders.promo_code` and `orders.discount_amount` even when the customer has not entered a promo code. Deploying the new API without these columns causes orders to fail with "The order could not be saved. Please try again."
+
+From the repository root, with the API's database environment variables configured for the intended database, run:
+
+```bash
+npm run db:repair-checkout -w @xura/api
+```
+
+This applies `database/migrations/006_checkout_promotion_repair.sql`, a repeatable repair covering the additions in 004 and 005. It creates missing promotion tables, adds missing checkout/promotion columns, and fixes the missing auto-increment attribute in the original 004 migration. Existing products, orders, and promo codes are retained. It does not run the product seed.
+
+If using a database SQL console instead, select the application database and run the contents of that repair SQL file. No API restart is required for the database-only repair. Deploy the API change to enable detailed server-side order failure logging; database errors remain hidden from shoppers.
+
+Verify the repair by placing an order. For local development, `npm run test:checkout -w @xura/api` exercises the repair and real order API in a disposable local MySQL database, including all three payment methods and repeat application of the repair.
+
 ## Product pages
 
 - `http://localhost:3007/products/arven`

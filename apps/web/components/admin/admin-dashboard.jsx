@@ -4,21 +4,12 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
+import AdminSidebar from "./admin-sidebar";
+import AdminHeader from "./admin-header";
 import AdminProductForm from "./admin-product-form";
 
 const number = new Intl.NumberFormat("en-PK", { maximumFractionDigits: 0 });
 const money = (value) => `PKR ${number.format(Number(value || 0))}`;
-
-function DashboardIcon({ name }) {
-  const paths = {
-    overview: <><rect x="4" y="4" width="6" height="6" rx="1" /><rect x="14" y="4" width="6" height="6" rx="1" /><rect x="4" y="14" width="6" height="6" rx="1" /><rect x="14" y="14" width="6" height="6" rx="1" /></>,
-    orders: <><path d="M6 3h12l2 5-2 13H6L4 8l2-5Z" /><path d="M4 8h16M9 12h6" /></>,
-    products: <><path d="m4 7 8-4 8 4-8 4-8-4Z" /><path d="m4 7 8 4 8-4v10l-8 4-8-4V7Z" /><path d="M12 11v10" /></>,
-    store: <><path d="M4 10h16M6 10v10h12V10M3 10l2-6h14l2 6" /><path d="M9 20v-6h6v6" /></>,
-    logout: <><path d="M10 5H5v14h5M14 8l4 4-4 4M8 12h10" /></>
-  };
-  return <svg viewBox="0 0 24 24" aria-hidden="true">{paths[name]}</svg>;
-}
 
 function StatCard({ label, value, detail, index }) {
   return (
@@ -184,11 +175,6 @@ export default function AdminDashboard() {
     setShowProductForm(true);
   }
 
-  async function logout() {
-    await fetch("/api/admin/logout", { method: "POST", credentials: "include" });
-    router.replace("/admin/login");
-  }
-
   if (!data && !error) {
     return (
       <main className="admin-loading">
@@ -198,37 +184,12 @@ export default function AdminDashboard() {
     );
   }
 
-  const today = new Intl.DateTimeFormat("en-PK", { weekday: "long", day: "numeric", month: "long", year: "numeric" }).format(new Date());
-
   return (
     <main className="admin-dashboard-page">
-      <aside className="admin-sidebar">
-        <Link className="admin-sidebar-brand" href="/admin">
-          <span>XURA LAB</span><small>ADMIN</small>
-        </Link>
-        <nav aria-label="Admin navigation">
-          <Link className="is-active" href="/admin"><DashboardIcon name="overview" /><span>Overview</span></Link>
-          <Link href="/admin/orders"><DashboardIcon name="orders" /><span>Orders</span></Link>
-          <Link href="/admin/products"><DashboardIcon name="products" /><span>Products</span></Link>
-        </nav>
-        <div className="admin-sidebar-bottom">
-          <Link href="/" target="_blank"><DashboardIcon name="store" /><span>View store</span></Link>
-          <button type="button" onClick={logout}><DashboardIcon name="logout" /><span>Sign out</span></button>
-        </div>
-      </aside>
+      <AdminSidebar activeTab="overview" />
 
       <div className="admin-dashboard-content">
-        <header className="admin-dashboard-header">
-          <button className="admin-mobile-brand" type="button" aria-label="Admin menu">XL</button>
-          <div>
-            <p>{today}</p>
-            <span>ADMIN WORKSPACE</span>
-          </div>
-          <div className="admin-profile">
-            <span>HA</span>
-            <div><strong>Store administrator</strong><small>{data?.admin?.email || "Administrator"}</small></div>
-          </div>
-        </header>
+        <AdminHeader title="ADMIN WORKSPACE" adminEmail={data?.admin?.email} />
 
         <div className="admin-dashboard-main" id="overview">
           {error ? (
@@ -246,7 +207,10 @@ export default function AdminDashboard() {
                   <h1>Good to see you.</h1>
                   <p>Here is what is happening across Xura Lab today.</p>
                 </div>
-                <Link href="/" target="_blank">OPEN STOREFRONT <span>↗</span></Link>
+                <div className="admin-welcome-actions">
+                  <Link href="/admin/promos">PROMO CODES →</Link>
+                  <Link href="/" target="_blank">OPEN STOREFRONT <span>↗</span></Link>
+                </div>
               </section>
 
               {data.source === "local" && (
@@ -258,6 +222,7 @@ export default function AdminDashboard() {
                 <StatCard index={2} label="Orders" value={number.format(data.stats.totalOrders)} detail="All customer orders" />
                 <StatCard index={3} label="Pending" value={number.format(data.stats.pendingOrders)} detail="Awaiting confirmation" />
                 <StatCard index={4} label="Products" value={number.format(data.stats.totalProducts)} detail="Active fragrances" />
+                <StatCard index={5} label="Promo codes" value={number.format(data.stats.totalPromos || 0)} detail={`${data.stats.activePromos || 0} active campaigns`} />
               </section>
 
               <section className="admin-panel" id="orders">
@@ -344,6 +309,47 @@ export default function AdminDashboard() {
                   )) : (
                     <div className="admin-empty-state"><span>00</span><h3>No products in the catalogue.</h3><p>Add a fragrance when you are ready to publish it.</p></div>
                   )}
+                </div>
+              </section>
+
+              <section className="admin-panel" id="promos">
+                <div className="admin-panel-heading">
+                  <div>
+                    <p className="admin-eyebrow">MARKETING & DISCOUNTS</p>
+                    <h2>Promo Codes</h2>
+                  </div>
+                  <div className="admin-heading-actions-wrap">
+                    <span>{data.stats.totalPromos || 0} configured campaigns</span>
+                    <Link className="admin-panel-view-all-btn" href="/admin/promos">MANAGE ALL PROMOS →</Link>
+                  </div>
+                </div>
+                <div style={{ padding: "26px 36px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "20px", flexWrap: "wrap", background: "rgba(255, 255, 255, 0.4)" }}>
+                  <div>
+                    <strong style={{ display: "block", fontSize: "14px", color: "var(--ink)", marginBottom: "4px" }}>
+                      Manage discount codes, fragrance restrictions & spending limits
+                    </strong>
+                    <p style={{ margin: 0, fontSize: "12.5px", color: "#666" }}>
+                      Create fixed PKR or percentage discount codes, define minimum/maximum spend thresholds, and restrict promo codes to Arven, Velor, or Nyra.
+                    </p>
+                  </div>
+                  <Link
+                    href="/admin/promos"
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "8px",
+                      padding: "11px 20px",
+                      background: "var(--ink)",
+                      color: "var(--paper)",
+                      fontSize: "10px",
+                      fontWeight: 600,
+                      letterSpacing: "0.1em",
+                      textTransform: "uppercase",
+                      textDecoration: "none"
+                    }}
+                  >
+                    OPEN PROMOS PAGE →
+                  </Link>
                 </div>
               </section>
             </>

@@ -20,3 +20,4 @@ export { default as CheckoutPage } from "./checkout/checkout-page";
 // Content page components
 export { default as AboutPage } from "./pages/about-page";
 export { default as ContactPage } from "./pages/contact-page";
+export { default as PolicyPage } from "./pages/policy-page";

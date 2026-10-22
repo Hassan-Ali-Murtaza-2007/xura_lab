@@ -425,6 +425,12 @@ export default function CheckoutPage() {
               <Link href="/">‹ Return to store</Link>
               <button type="submit" disabled={submitting}>{submitting ? "PLACING ORDER…" : `PAY ${money(total)}`}</button>
             </div>
+            <p className="checkout-consent-note">
+              By placing your order, you agree to Xura Lab's{" "}
+              <Link href="/policies/terms-of-service" target="_blank">Terms & Conditions</Link>,{" "}
+              <Link href="/policies/refund-policy" target="_blank">Return Policy</Link>, and{" "}
+              <Link href="/policies/privacy-policy" target="_blank">Privacy Policy</Link>.
+            </p>
             {status && <p className="checkout-status-message" role="status">{status}</p>}
           </form>
         </section>
@@ -557,9 +563,12 @@ export default function CheckoutPage() {
       </div>
 
       <footer className="checkout-footer">
-        <span>© 2026 Xura Lab</span>
-        <Link href="/contact">Contact</Link>
-        <a href="mailto:contact@xuralab.com">Privacy & support</a>
+        <span>© 2026 Xura Lab · Registered in Rawalpindi, Pakistan</span>
+        <Link href="/policies/refund-policy" target="_blank">Refund Policy</Link>
+        <Link href="/policies/shipping-policy" target="_blank">Shipping Policy</Link>
+        <Link href="/policies/privacy-policy" target="_blank">Privacy Policy</Link>
+        <Link href="/policies/terms-of-service" target="_blank">Terms of Service</Link>
+        <Link href="/contact" target="_blank">Contact</Link>
       </footer>
     </main>
   );

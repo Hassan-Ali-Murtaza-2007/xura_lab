@@ -48,8 +48,11 @@ export default function CartDrawer({
         {cart.length > 0 && (
           <div className="cart-summary">
             <div><span>Subtotal</span><strong>{money(cartTotal)}</strong></div>
-            <p>Delivery (PKR 370) is added at checkout.</p>
+            <p>Delivery (PKR 370) is added at checkout · Free on advance payment.</p>
             <Link className="cart-checkout-button" href="/checkout" onClick={onClose}>CHECKOUT</Link>
+            <p style={{ fontSize: "11px", color: "var(--muted)", margin: "10px 0 0", textAlign: "center", lineHeight: "1.4" }}>
+              7-day returns on sealed bottles · <Link href="/policies/refund-policy" onClick={onClose} style={{ textDecoration: "underline", color: "inherit" }}>Return Policy</Link>
+            </p>
           </div>
         )}
       </aside>
