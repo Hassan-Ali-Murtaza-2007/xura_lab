@@ -9,6 +9,36 @@ import { isCompleteAddress, normalizeAddress, withCurrentImage } from "../utils/
 
 const router = Router();
 
+function formatProductBundle(product) {
+  let bundleItems = product.bundleItems || null;
+  if (typeof bundleItems === "string") {
+    try {
+      bundleItems = JSON.parse(bundleItems);
+    } catch {
+      bundleItems = null;
+    }
+  }
+  if (!bundleItems && (product.gender === "Bundles" || product.slug?.includes("bundle") || product.name?.toLowerCase().includes("bundle"))) {
+    bundleItems = [
+      {
+        name: "Nyra",
+        tagline: "Luminous white florals, roasted coffee & vanilla",
+        volumeMl: 50,
+        concentrations: [10, 20, 40],
+        defaultConcentration: 20
+      },
+      {
+        name: "Arven",
+        tagline: "Rich oud, warm amber & refined leather",
+        volumeMl: 50,
+        concentrations: [10, 20, 40],
+        defaultConcentration: 10
+      }
+    ];
+  }
+  return { ...product, bundleItems };
+}
+
 router.get("/health", async (_request, response) => {
   if (!isDatabaseConfigured()) {
     return response.json({ status: "ok", database: "not-configured" });
@@ -43,7 +73,8 @@ router.get("/products", async (_request, response) => {
         description,
         notes,
         \`character\`,
-        best_for AS bestFor
+        best_for AS bestFor,
+        bundle_items AS bundleItems
       FROM products
       WHERE is_active = TRUE
       ORDER BY sort_order ASC, id ASC
@@ -69,11 +100,13 @@ router.get("/products", async (_request, response) => {
     const imagesByProduct = await productImagesById(pool, rows.map((product) => product.id));
     response.json({
       products: rows.map((product) =>
-        withCurrentImage({
-          ...product,
-          variants: variantsByProduct.get(product.id) || [],
-          images: imagesByProduct.get(product.id) || [product.imageUrl]
-        })
+        formatProductBundle(
+          withCurrentImage({
+            ...product,
+            variants: variantsByProduct.get(product.id) || [],
+            images: imagesByProduct.get(product.id) || [product.imageUrl]
+          })
+        )
       ),
       source: "mysql"
     });
@@ -98,7 +131,7 @@ router.get("/products/:slug", async (request, response) => {
   try {
     const [products] = await pool.query(
       `SELECT id, slug, name, tagline, gender, volume_ml AS volumeMl, price, compare_at_price AS compareAtPrice, image_url AS imageUrl,
-              sort_order AS sortOrder, \`lead\`, description, notes, \`character\`, best_for AS bestFor
+              sort_order AS sortOrder, \`lead\`, description, notes, \`character\`, best_for AS bestFor, bundle_items AS bundleItems
        FROM products WHERE slug = ? AND is_active = TRUE LIMIT 1`,
       [request.params.slug]
     );
@@ -111,11 +144,13 @@ router.get("/products/:slug", async (request, response) => {
     );
     const imagesByProduct = await productImagesById(pool, [product.id]);
     response.json({
-      product: withCurrentImage({
-        ...product,
-        variants,
-        images: imagesByProduct.get(product.id) || [product.imageUrl]
-      }),
+      product: formatProductBundle(
+        withCurrentImage({
+          ...product,
+          variants,
+          images: imagesByProduct.get(product.id) || [product.imageUrl]
+        })
+      ),
       source: "mysql"
     });
   } catch (error) {
@@ -301,7 +336,9 @@ router.post("/orders", async (request, response) => {
     .map((item) => ({
       productId: Number(item.productId),
       variantId: Number(item.variantId),
-      quantity: Number(item.quantity)
+      quantity: Number(item.quantity),
+      unitPrice: Number(item.price || item.unitPrice) > 0 ? Number(item.price || item.unitPrice) : null,
+      bundleSelectionText: item.bundleSelectionText ? String(item.bundleSelectionText).trim().slice(0, 100) : null
     }))
     .filter(
       (item) =>
@@ -342,14 +379,18 @@ router.post("/orders", async (request, response) => {
           .status(409)
           .json({ message: "A fragrance concentration in your cart is no longer available." });
       }
-      const unitPrice = Number(variant.price);
+      const unitPrice = (item.bundleSelectionText && item.unitPrice) ? item.unitPrice : Number(variant.price);
       const lineTotal = unitPrice * item.quantity;
       subtotal += lineTotal;
+      const displayName = item.bundleSelectionText
+        ? `${prod.name} (${item.bundleSelectionText})`.slice(0, 120)
+        : prod.name;
       orderItems.push({
         productId: item.productId,
         variantId: item.variantId,
-        productName: prod.name,
-        concentrationPercent: variant.concentrationPercent,
+        productName: displayName,
+        concentrationPercent: item.bundleSelectionText ? null : variant.concentrationPercent,
+        bundleDetails: item.bundleSelectionText || null,
         unitPrice,
         quantity: item.quantity,
         lineTotal
@@ -440,20 +481,25 @@ router.post("/orders", async (request, response) => {
       });
     }
 
-    const subtotal = normalizedItems.reduce(
-      (total, item) => total + variantById.get(item.variantId).price * item.quantity,
-      0
-    );
+    const subtotal = normalizedItems.reduce((total, item) => {
+      const v = variantById.get(item.variantId);
+      const price = (item.bundleSelectionText && item.unitPrice) ? item.unitPrice : v.price;
+      return total + price * item.quantity;
+    }, 0);
     const isAdvance = paymentMethod === "bank-transfer" || paymentMethod === "card";
     const deliveryFee = isAdvance ? 0 : 370;
 
-    const itemsForEvaluation = normalizedItems.map((item) => ({
-      productId: item.productId,
-      variantId: item.variantId,
-      quantity: item.quantity,
-      price: variantById.get(item.variantId).price,
-      lineTotal: variantById.get(item.variantId).price * item.quantity
-    }));
+    const itemsForEvaluation = normalizedItems.map((item) => {
+      const v = variantById.get(item.variantId);
+      const price = (item.bundleSelectionText && item.unitPrice) ? item.unitPrice : v.price;
+      return {
+        productId: item.productId,
+        variantId: item.variantId,
+        quantity: item.quantity,
+        price,
+        lineTotal: price * item.quantity
+      };
+    });
 
     const { promo, discountAmount } = await evaluatePromoCode(promoCode, subtotal, connection, itemsForEvaluation);
     const total = Math.max(0, subtotal - discountAmount) + deliveryFee;
@@ -514,18 +560,24 @@ router.post("/orders", async (request, response) => {
 
     for (const item of normalizedItems) {
       const variant = variantById.get(item.variantId);
+      const unitPrice = (item.bundleSelectionText && item.unitPrice) ? item.unitPrice : variant.price;
+      const lineTotal = unitPrice * item.quantity;
+      const displayName = item.bundleSelectionText
+        ? `${variant.name} (${item.bundleSelectionText})`.slice(0, 120)
+        : variant.name;
       await connection.query(
-        `INSERT INTO order_items (order_id, product_id, variant_id, product_name, concentration_percent, unit_price, quantity, line_total)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+        `INSERT INTO order_items (order_id, product_id, variant_id, product_name, concentration_percent, bundle_details, unit_price, quantity, line_total)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           orderResult.insertId,
           variant.productId,
           variant.variantId,
-          variant.name,
-          variant.concentrationPercent,
-          variant.price,
+          displayName,
+          item.bundleSelectionText ? null : variant.concentrationPercent,
+          item.bundleSelectionText || null,
+          unitPrice,
           item.quantity,
-          variant.price * item.quantity
+          lineTotal
         ]
       );
     }

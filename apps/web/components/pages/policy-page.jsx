@@ -413,7 +413,7 @@ export default function PolicyPageView({ initialSlug = "privacy-policy" }) {
         <div className="shell footer-inner">
           <div className="footer-brand">
             <div className="footer-brand-mark">
-              <Image src="/images/xura-logo-4k.png" width={4096} height={4096} alt="Xura Lab" />
+              <Image src="/images/xura-brand-mark.png" width={1060} height={1090} alt="Xura Lab" unoptimized priority />
             </div>
             <span className="footer-brand-tagline">FRAGRANCE</span>
           </div>

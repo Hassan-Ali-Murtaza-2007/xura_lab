@@ -1,4 +1,4 @@
-import { createHmac, timingSafeEqual } from "node:crypto";
+import { createHmac, randomBytes, scryptSync, timingSafeEqual } from "node:crypto";
 import {
   adminCookieName,
   adminEmail,
@@ -6,6 +6,9 @@ import {
   adminSessionSecret,
   isProduction
 } from "../config/index.js";
+
+export const customerCookieName = "xura_customer_session";
+export const customerSessionSeconds = 30 * 24 * 60 * 60; // 30 days
 
 export function safeEqual(left, right) {
   const leftBuffer = Buffer.from(String(left));
@@ -50,6 +53,57 @@ export function readAdminSession(request) {
 
 export function adminCookie(token, maxAge = adminSessionSeconds) {
   return `${adminCookieName}=${encodeURIComponent(token)}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${maxAge}${
+    isProduction ? "; Secure" : ""
+  }`;
+}
+
+export function hashPassword(password) {
+  const salt = randomBytes(16).toString("hex");
+  const hash = scryptSync(String(password), salt, 64).toString("hex");
+  return `${salt}:${hash}`;
+}
+
+export function verifyPassword(password, stored) {
+  if (!stored || typeof stored !== "string" || !stored.includes(":")) return false;
+  const [salt, originalHash] = stored.split(":");
+  const testHash = scryptSync(String(password), salt, 64).toString("hex");
+  return safeEqual(originalHash, testHash);
+}
+
+export function createCustomerSession(customer) {
+  const payload = Buffer.from(
+    JSON.stringify({
+      id: customer.id,
+      email: customer.email,
+      name: customer.name,
+      phone: customer.phone || null,
+      exp: Date.now() + customerSessionSeconds * 1000
+    })
+  ).toString("base64url");
+  const signature = createHmac("sha256", adminSessionSecret || "xura-customer-secret").update(payload).digest("base64url");
+  return `${payload}.${signature}`;
+}
+
+export function readCustomerSession(request) {
+  const secret = adminSessionSecret || "xura-customer-secret";
+  const cookies = parseCookies(request.headers.cookie);
+  const authHeader = request.headers.authorization;
+  const token = cookies[customerCookieName] || (authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : null);
+  if (!token) return null;
+  const [payload, providedSignature] = token.split(".");
+  if (!payload || !providedSignature) return null;
+  const expectedSignature = createHmac("sha256", secret).update(payload).digest("base64url");
+  if (!safeEqual(providedSignature, expectedSignature)) return null;
+  try {
+    const session = JSON.parse(Buffer.from(payload, "base64url").toString("utf8"));
+    return Number(session.exp) > Date.now() ? session : null;
+  } catch {
+    return null;
+  }
+}
+
+export function customerCookie(token, maxAge = customerSessionSeconds) {
+  return `${customerCookieName}=${encodeURIComponent(token)}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${maxAge}${
     isProduction ? "; Secure" : ""
   }`;
 }

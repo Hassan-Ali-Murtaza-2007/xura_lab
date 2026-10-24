@@ -29,8 +29,14 @@ export default function CartDrawer({
             <div className="cart-item" key={itemKey(item)}>
               <Image src={item.imageUrl} width={72} height={72} alt={`${item.name} fragrance`} />
               <div className="cart-item-copy">
-                <strong>{item.name}{item.concentration ? ` ${item.concentration}%` : ""}</strong>
-                <p>{item.gender} · {item.volumeMl} ml</p>
+                <strong>{item.name}{!item.bundleSelectionText && item.concentration ? ` ${item.concentration}%` : ""}</strong>
+                {item.bundleSelectionText ? (
+                  <p className="cart-item-bundle-meta">
+                    <span className="cart-bundle-pill">Set</span> {item.bundleSelectionText}
+                  </p>
+                ) : (
+                  <p>{item.gender} · {item.volumeMl} ml</p>
+                )}
                 <div className="quantity-control" aria-label={`Quantity for ${item.name}`}>
                   <button type="button" onClick={() => onUpdateQuantity(itemKey(item), item.quantity - 1)} aria-label="Decrease quantity">−</button>
                   <span>{item.quantity}</span>

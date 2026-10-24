@@ -310,7 +310,7 @@ export default function AdminOrders() {
                                 {order.items?.length ? (
                                   order.items.map((it, i) => (
                                     <span key={i} className="admin-item-chip">
-                                      {it.productName} ({it.concentrationPercent}%) × {it.quantity}
+                                      {it.productName}{it.concentrationPercent ? ` (${it.concentrationPercent}%)` : ""} × {it.quantity}
                                     </span>
                                   ))
                                 ) : (
@@ -483,7 +483,7 @@ export default function AdminOrders() {
                       {selectedOrder.items?.map((item, idx) => (
                         <tr key={idx}>
                           <td><strong>{item.productName}</strong></td>
-                          <td>{item.concentrationPercent}%</td>
+                          <td>{item.concentrationPercent ? `${item.concentrationPercent}%` : (item.bundleDetails || "Custom Bundle")}</td>
                           <td>{money(item.unitPrice)}</td>
                           <td>× {item.quantity}</td>
                           <td><strong>{money(item.lineTotal)}</strong></td>

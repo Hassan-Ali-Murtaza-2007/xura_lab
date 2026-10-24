@@ -53,8 +53,8 @@ router.post("/products", requireAdmin, productImageUpload.array("images", 5), as
       const [productResult] = await connection.query(
         `INSERT INTO products (
            slug, name, tagline, gender, volume_ml, price, compare_at_price, image_url, sort_order,
-           \`lead\`, description, notes, \`character\`, best_for, is_active
-         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE)`,
+           \`lead\`, description, notes, \`character\`, best_for, bundle_items, is_active
+         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE)`,
         [
           slug,
           productInput.name,
@@ -69,7 +69,8 @@ router.post("/products", requireAdmin, productImageUpload.array("images", 5), as
           productInput.description,
           productInput.notes,
           productInput.character,
-          productInput.bestFor
+          productInput.bestFor,
+          productInput.bundleItems ? JSON.stringify(productInput.bundleItems) : null
         ]
       );
       const productId = productResult.insertId;
@@ -182,7 +183,7 @@ router.get("/products/:id", requireAdmin, async (request, response) => {
     const [products] = await pool.query(
       `SELECT id, slug, name, tagline, gender, volume_ml AS volumeMl, price, compare_at_price AS compareAtPrice,
               image_url AS imageUrl, sort_order AS sortOrder, \`lead\`, description,
-              notes, \`character\`, best_for AS bestFor, is_active AS isActive
+              notes, \`character\`, best_for AS bestFor, bundle_items AS bundleItems, is_active AS isActive
        FROM products WHERE id = ? AND is_active = TRUE LIMIT 1`,
       [productId]
     );
@@ -289,7 +290,7 @@ router.put("/products/:id", requireAdmin, productImageUpload.array("images", 5),
       await connection.query(
         `UPDATE products SET
            name = ?, tagline = ?, gender = ?, volume_ml = ?, price = ?, compare_at_price = ?, image_url = ?,
-           \`lead\` = ?, description = ?, notes = ?, \`character\` = ?, best_for = ?
+           \`lead\` = ?, description = ?, notes = ?, \`character\` = ?, best_for = ?, bundle_items = ?
          WHERE id = ?`,
         [
           productInput.name,
@@ -304,6 +305,7 @@ router.put("/products/:id", requireAdmin, productImageUpload.array("images", 5),
           productInput.notes,
           productInput.character,
           productInput.bestFor,
+          productInput.bundleItems ? JSON.stringify(productInput.bundleItems) : null,
           productId
         ]
       );

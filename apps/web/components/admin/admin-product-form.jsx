@@ -50,6 +50,15 @@ export default function AdminProductForm({ product = null, onCancel, onCreated, 
   const isEditing = Boolean(product);
   const imageInput = useRef(null);
   const [fields, setFields] = useState(() => fieldsForProduct(product));
+  const [bundleBottles, setBundleBottles] = useState(() => {
+    if (product?.bundleItems && Array.isArray(product.bundleItems) && product.bundleItems.length > 0) {
+      return product.bundleItems;
+    }
+    return [
+      { name: "Nyra", tagline: "Luminous white florals, roasted coffee & vanilla", volumeMl: 50, concentrations: [10, 20, 40], defaultConcentration: 20 },
+      { name: "Arven", tagline: "Rich oud, warm amber & refined leather", volumeMl: 50, concentrations: [10, 20, 40], defaultConcentration: 10 }
+    ];
+  });
   const [variants, setVariants] = useState(() => variantsForProduct(product));
   const [existingImageUrls, setExistingImageUrls] = useState(() => (
     product?.images?.length ? product.images : (product?.imageUrl ? [product.imageUrl] : [])
@@ -205,6 +214,9 @@ export default function AdminProductForm({ product = null, onCancel, onCreated, 
       )
     );
     body.append("primaryImageIndex", String(primaryImageIndex));
+    if (fields.gender === "Bundles") {
+      body.append("bundleItems", JSON.stringify(bundleBottles));
+    }
     body.append("retainedImages", JSON.stringify(existingImageUrls));
     images.forEach((image) => body.append("images", image));
 
@@ -257,6 +269,65 @@ export default function AdminProductForm({ product = null, onCancel, onCreated, 
             <label className="admin-field"><span>Bottle size (ml)</span><input name="volumeMl" type="number" min="1" max="1000" value={fields.volumeMl} onChange={updateField} required /></label>
           </div>
         </section>
+
+        {fields.gender === "Bundles" && (
+          <section className="admin-form-section admin-bundle-config-section">
+            <div className="admin-form-section-heading">
+              <span>01B</span>
+              <div>
+                <h4>Bundle Fragrance Bottles</h4>
+                <p>Define the fragrance bottles included in this bundle. Customers will pick the concentration for each.</p>
+              </div>
+            </div>
+            <div className="admin-bundle-bottles-list" style={{ display: "flex", flexDirection: "column", gap: "12px", width: "100%" }}>
+              {bundleBottles.map((bottle, idx) => (
+                <div key={idx} style={{ border: "1px solid rgba(57, 70, 63, 0.2)", padding: "14px", background: "rgba(255, 255, 255, 0.5)", display: "grid", gridTemplateColumns: "1fr 1.5fr auto", gap: "12px", alignItems: "end" }}>
+                  <label className="admin-field" style={{ margin: 0 }}>
+                    <span>Bottle {idx + 1} Fragrance</span>
+                    <input
+                      value={bottle.name}
+                      onChange={(e) => {
+                        const next = [...bundleBottles];
+                        next[idx] = { ...next[idx], name: e.target.value };
+                        setBundleBottles(next);
+                      }}
+                      placeholder="e.g. Nyra"
+                      required
+                    />
+                  </label>
+                  <label className="admin-field" style={{ margin: 0 }}>
+                    <span>Notes / Scent Tagline</span>
+                    <input
+                      value={bottle.tagline}
+                      onChange={(e) => {
+                        const next = [...bundleBottles];
+                        next[idx] = { ...next[idx], tagline: e.target.value };
+                        setBundleBottles(next);
+                      }}
+                      placeholder="e.g. Luminous white florals, roasted coffee & vanilla"
+                    />
+                  </label>
+                  {bundleBottles.length > 2 && (
+                    <button
+                      type="button"
+                      style={{ padding: "8px 12px", background: "none", border: "1px solid #c0392b", color: "#c0392b", cursor: "pointer", fontSize: "11px", height: "38px" }}
+                      onClick={() => setBundleBottles(bundleBottles.filter((_, i) => i !== idx))}
+                    >
+                      Remove
+                    </button>
+                  )}
+                </div>
+              ))}
+              <button
+                type="button"
+                style={{ padding: "8px 16px", background: "var(--ink)", color: "var(--paper)", border: "none", cursor: "pointer", fontSize: "11px", letterSpacing: "0.08em", alignSelf: "flex-start" }}
+                onClick={() => setBundleBottles([...bundleBottles, { name: "", tagline: "", volumeMl: 50, concentrations: [10, 20, 40], defaultConcentration: 20 }])}
+              >
+                + Add Another Bottle
+              </button>
+            </div>
+          </section>
+        )}
 
         <section className="admin-form-section admin-image-section">
           <div className="admin-form-section-heading"><span>02</span><div><h4>Customer images</h4><p>Add up to 5 images (maximum 5)</p></div></div>

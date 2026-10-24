@@ -83,7 +83,7 @@ router.get("/orders", requireAdmin, async (request, response) => {
       const placeholders = orderIds.map(() => "?").join(",");
       const [itemRows] = await pool.query(
         `SELECT id, order_id AS orderId, product_id AS productId, product_name AS productName,
-                concentration_percent AS concentrationPercent, unit_price AS unitPrice, quantity, line_total AS lineTotal
+                concentration_percent AS concentrationPercent, bundle_details AS bundleDetails, unit_price AS unitPrice, quantity, line_total AS lineTotal
          FROM order_items WHERE order_id IN (${placeholders})`,
         orderIds
       );
@@ -141,7 +141,7 @@ router.get("/orders/:id", requireAdmin, async (request, response) => {
 
     const [items] = await pool.query(
       `SELECT id, order_id AS orderId, product_id AS productId, product_name AS productName,
-              concentration_percent AS concentrationPercent, unit_price AS unitPrice, quantity, line_total AS lineTotal
+              concentration_percent AS concentrationPercent, bundle_details AS bundleDetails, unit_price AS unitPrice, quantity, line_total AS lineTotal
        FROM order_items WHERE order_id = ?`,
       [orderId]
     );

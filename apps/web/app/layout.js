@@ -1,4 +1,6 @@
 import "./globals.css";
+import { CustomerAuthProvider } from "@/context/customer-auth-context";
+import SiteOpeningAnimation from "@/components/storefront/site-opening-animation";
 
 export const metadata = {
   title: "Xura Lab — Fragrance beyond familiarity",
@@ -21,7 +23,12 @@ export default function RootLayout({ children }) {
         <link rel="shortcut icon" href="/favicon.png" type="image/png" />
         <link rel="apple-touch-icon" href="/favicon.png" />
       </head>
-      <body>{children}</body>
+      <body>
+        <CustomerAuthProvider>
+          <SiteOpeningAnimation />
+          {children}
+        </CustomerAuthProvider>
+      </body>
     </html>
   );
 }

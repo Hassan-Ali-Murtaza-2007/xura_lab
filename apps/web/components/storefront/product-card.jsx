@@ -53,9 +53,15 @@ export default function ProductCard({ product, onAddToCart }) {
     return max;
   }, productDiscountPct);
 
+  const isBundle = product.gender === "Bundles" || Boolean(product.bundleItems?.length);
+
   function handleQuickClick(event) {
     event.preventDefault();
     event.stopPropagation();
+    if (isBundle) {
+      window.location.href = `/products/${product.slug}`;
+      return;
+    }
     if (hasMultipleVariants) {
       setIsSelecting(true);
     } else {
@@ -154,7 +160,7 @@ export default function ProductCard({ product, onAddToCart }) {
             type="button"
             onClick={handleQuickClick}
           >
-            Add to cart
+            {isBundle ? "Customize Bundle" : "Add to cart"}
           </button>
         )}
       </div>

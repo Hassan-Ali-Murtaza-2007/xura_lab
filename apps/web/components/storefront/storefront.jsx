@@ -6,6 +6,7 @@ import { useEffect, useMemo, useState } from "react";
 import CartDrawer from "./cart-drawer";
 import ProductCard from "./product-card";
 import { productCatalog, withCurrentProductImages } from "@/data/products";
+import { useCustomerAuth } from "@/context/customer-auth-context";
 
 const fallbackProducts = productCatalog;
 
@@ -40,6 +41,7 @@ function CloseIcon() {
 }
 
 export default function Storefront() {
+  const { customer, isLoggedIn, requireAuth, openLoginModal, logout } = useCustomerAuth();
   const [products, setProducts] = useState(fallbackProducts);
   const [query, setQuery] = useState("");
   const [gender, setGender] = useState("All");
@@ -113,33 +115,35 @@ export default function Storefront() {
   }
 
   function addToCart(product, variant = null) {
-    const selectedVariant = variant || product.variants?.[0];
-    if (!selectedVariant) return;
+    requireAuth(() => {
+      const selectedVariant = variant || product.variants?.[0];
+      if (!selectedVariant) return;
 
-    const cartKey = `${product.id}:${selectedVariant.id}`;
-    const newItem = {
-      id: product.id,
-      variantId: selectedVariant.id,
-      cartKey,
-      slug: product.slug,
-      name: product.name,
-      gender: product.gender,
-      volumeMl: product.volumeMl,
-      concentration: selectedVariant.concentrationPercent,
-      price: selectedVariant.price,
-      compareAtPrice: selectedVariant.compareAtPrice || null,
-      imageUrl: product.imageUrl,
-      quantity: 1
-    };
+      const cartKey = `${product.id}:${selectedVariant.id}`;
+      const newItem = {
+        id: product.id,
+        variantId: selectedVariant.id,
+        cartKey,
+        slug: product.slug,
+        name: product.name,
+        gender: product.gender,
+        volumeMl: product.volumeMl,
+        concentration: selectedVariant.concentrationPercent,
+        price: selectedVariant.price,
+        compareAtPrice: selectedVariant.compareAtPrice || null,
+        imageUrl: product.imageUrl,
+        quantity: 1
+      };
 
-    setCart((items) => {
-      const existing = items.find((item) => itemKey(item) === cartKey);
-      if (existing) {
-        return items.map((item) => itemKey(item) === cartKey ? { ...item, quantity: item.quantity + 1 } : item);
-      }
-      return [...items, newItem];
+      setCart((items) => {
+        const existing = items.find((item) => itemKey(item) === cartKey);
+        if (existing) {
+          return items.map((item) => itemKey(item) === cartKey ? { ...item, quantity: item.quantity + 1 } : item);
+        }
+        return [...items, newItem];
+      });
+      setCartOpen(true);
     });
-    setCartOpen(true);
   }
 
   function chooseGender(nextGender) {
@@ -172,10 +176,32 @@ export default function Storefront() {
             <small>FRAGRANCE</small>
           </a>
 
-          <button className="cart-trigger" type="button" onClick={() => setCartOpen(true)} aria-label={`Open cart with ${cartCount} items`}>
-            <BagIcon />
-            <span>Cart ({cartCount})</span>
-          </button>
+          <div className="header-user-actions">
+            {isLoggedIn ? (
+              <button
+                className="client-auth-btn"
+                type="button"
+                onClick={logout}
+                title="Sign out of your account"
+              >
+                <span>Hi, {customer?.name?.split(" ")[0] || "Client"}</span>
+                <small>Sign Out</small>
+              </button>
+            ) : (
+              <button
+                className="client-auth-btn"
+                type="button"
+                onClick={() => openLoginModal()}
+                title="Client Sign In"
+              >
+                <span>Sign In</span>
+              </button>
+            )}
+            <button className="cart-trigger" type="button" onClick={() => setCartOpen(true)} aria-label={`Open cart with ${cartCount} items`}>
+              <BagIcon />
+              <span>Cart ({cartCount})</span>
+            </button>
+          </div>
 
           <button className="menu-trigger" type="button" onClick={() => setMobileOpen(true)} aria-label="Open navigation">
             <span />
@@ -290,7 +316,7 @@ export default function Storefront() {
         <div className="shell footer-inner">
           <div className="footer-brand">
             <div className="footer-brand-mark">
-              <Image src="/images/xura-logo-4k.png" width={4096} height={4096} alt="Xura Lab" />
+              <Image src="/images/xura-brand-mark.png" width={1060} height={1090} alt="Xura Lab" unoptimized priority />
             </div>
             <span className="footer-brand-tagline">FRAGRANCE</span>
           </div>
@@ -362,6 +388,29 @@ export default function Storefront() {
           <button type="button" onClick={() => chooseGender("Bundles")}>Bundles</button>
           <Link href="/about">About us</Link>
           <Link href="/contact">Contact us</Link>
+          {isLoggedIn ? (
+            <button
+              type="button"
+              className="mobile-auth-btn"
+              onClick={() => {
+                setMobileOpen(false);
+                logout();
+              }}
+            >
+              Hi, {customer?.name?.split(" ")[0] || "Client"} · Sign Out
+            </button>
+          ) : (
+            <button
+              type="button"
+              className="mobile-auth-btn"
+              onClick={() => {
+                setMobileOpen(false);
+                openLoginModal();
+              }}
+            >
+              Client Sign In / Register
+            </button>
+          )}
         </nav>
       </div>
     </>

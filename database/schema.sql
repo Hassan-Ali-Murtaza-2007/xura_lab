@@ -19,6 +19,7 @@ CREATE TABLE IF NOT EXISTS products (
   `notes` VARCHAR(255) NOT NULL,
   `character` VARCHAR(255) NOT NULL,
   `best_for` VARCHAR(255) NOT NULL,
+  `bundle_items` JSON NULL,
   `sort_order` INT UNSIGNED NOT NULL DEFAULT 0,
   `is_active` BOOLEAN NOT NULL DEFAULT TRUE,
   `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -97,6 +98,7 @@ CREATE TABLE IF NOT EXISTS order_items (
   `variant_id` BIGINT UNSIGNED NULL,
   `product_name` VARCHAR(120) NOT NULL,
   `concentration_percent` SMALLINT UNSIGNED NULL,
+  `bundle_details` VARCHAR(255) NULL,
   `unit_price` DECIMAL(10, 2) UNSIGNED NOT NULL,
   `quantity` SMALLINT UNSIGNED NOT NULL,
   `line_total` DECIMAL(10, 2) UNSIGNED NOT NULL,
@@ -133,4 +135,16 @@ CREATE TABLE IF NOT EXISTS promo_code_products (
   PRIMARY KEY (`promo_code_id`, `product_id`),
   CONSTRAINT `fk_pcp_promo_code` FOREIGN KEY (`promo_code_id`) REFERENCES `promo_codes` (`id`) ON DELETE CASCADE,
   CONSTRAINT `fk_pcp_product` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS customers (
+  `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `email` VARCHAR(254) NOT NULL,
+  `password_hash` VARCHAR(255) NOT NULL,
+  `name` VARCHAR(160) NOT NULL,
+  `phone` VARCHAR(40) NULL,
+  `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_customers_email` (`email`)
 );

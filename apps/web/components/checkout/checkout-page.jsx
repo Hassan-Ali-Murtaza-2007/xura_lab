@@ -210,7 +210,10 @@ export default function CheckoutPage() {
       items: cart.map((item) => ({
         productId: item.id,
         variantId: item.variantId || null,
-        quantity: item.quantity
+        quantity: item.quantity,
+        price: item.price,
+        bundleSelectionText: item.bundleSelectionText || null,
+        bundleSelections: item.bundleSelections || null
       }))
     };
 
@@ -448,7 +451,11 @@ export default function CheckoutPage() {
                   </div>
                   <div>
                     <strong>{item.name}</strong>
-                    <p>{item.concentration}% concentration · {item.volumeMl} ml</p>
+                    {item.bundleSelectionText ? (
+                      <p>{item.bundleSelectionText} · {item.volumeMl} ml each</p>
+                    ) : (
+                      <p>{item.concentration}% concentration · {item.volumeMl} ml</p>
+                    )}
                   </div>
                   <b>{money(item.price * item.quantity)}</b>
                 </div>

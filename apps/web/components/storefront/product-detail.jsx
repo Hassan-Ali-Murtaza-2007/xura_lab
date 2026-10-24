@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import CartDrawer from "./cart-drawer";
 import { withCurrentProductImages } from "@/data/products";
+import { useCustomerAuth } from "@/context/customer-auth-context";
 
 const number = new Intl.NumberFormat("en-PK", { maximumFractionDigits: 0 });
 const money = (value) => `PKR ${number.format(Number(value))}`;
@@ -39,6 +40,7 @@ function CloseIcon() {
 
 export default function ProductDetail({ product }) {
   const router = useRouter();
+  const { customer, isLoggedIn, requireAuth, openLoginModal, logout } = useCustomerAuth();
   const [search, setSearch] = useState("");
   const [selectedVariant, setSelectedVariant] = useState(product.variants[0]);
   const [quantity, setQuantity] = useState(1);
@@ -79,20 +81,188 @@ export default function ProductDetail({ product }) {
     setActiveImage(productImages[0]);
   }, [product, productImages]);
 
+  const isBundle = product.gender === "Bundles" || Boolean(product.bundleItems?.length);
+
+  const bundleBottles = useMemo(() => {
+    if (product.bundleItems && Array.isArray(product.bundleItems) && product.bundleItems.length > 0) {
+      return product.bundleItems;
+    }
+    if (product.gender === "Bundles" || product.slug?.includes("bundle") || product.name?.toLowerCase().includes("bundle")) {
+      const nameLower = product.name?.toLowerCase() || "";
+      const hasVelor = nameLower.includes("velor");
+      const hasNyra = nameLower.includes("nyra");
+      const hasArven = nameLower.includes("arven");
+
+      if (hasVelor && hasArven && !hasNyra) {
+        return [
+          {
+            name: "Velor",
+            tagline: "Bright bergamot, cedarwood & smoky vetiver",
+            volumeMl: product.volumeMl || 50,
+            concentrations: [10, 20, 40],
+            defaultConcentration: 20
+          },
+          {
+            name: "Arven",
+            tagline: "Rich oud, warm amber & refined leather",
+            volumeMl: product.volumeMl || 50,
+            concentrations: [10, 20, 40],
+            defaultConcentration: 10
+          }
+        ];
+      }
+      if (hasVelor && hasNyra && !hasArven) {
+        return [
+          {
+            name: "Nyra",
+            tagline: "Luminous white florals, roasted coffee & vanilla",
+            volumeMl: product.volumeMl || 50,
+            concentrations: [10, 20, 40],
+            defaultConcentration: 20
+          },
+          {
+            name: "Velor",
+            tagline: "Bright bergamot, cedarwood & smoky vetiver",
+            volumeMl: product.volumeMl || 50,
+            concentrations: [10, 20, 40],
+            defaultConcentration: 10
+          }
+        ];
+      }
+      return [
+        {
+          name: "Nyra",
+          tagline: "Luminous white florals, roasted coffee & vanilla",
+          volumeMl: product.volumeMl || 50,
+          concentrations: [10, 20, 40],
+          defaultConcentration: 20
+        },
+        {
+          name: "Arven",
+          tagline: "Rich oud, warm amber & refined leather",
+          volumeMl: product.volumeMl || 50,
+          concentrations: [10, 20, 40],
+          defaultConcentration: 10
+        }
+      ];
+    }
+    return [];
+  }, [product]);
+
+  const [selectedBottleConcentrations, setSelectedBottleConcentrations] = useState(() =>
+    bundleBottles.map((b) => b.defaultConcentration || b.concentrations?.[0] || 20)
+  );
+
+  useEffect(() => {
+    if (bundleBottles.length) {
+      setSelectedBottleConcentrations(bundleBottles.map((b) => b.defaultConcentration || b.concentrations?.[0] || 20));
+    }
+  }, [bundleBottles]);
+
+  function getPriceForConcentration(bottleName, conc) {
+    if (conc === 10) return 2500;
+    if (conc === 20) return 3500;
+    if (conc === 25) return 4500;
+    if (conc === 40) return 5500;
+    return 2500 + Math.round((conc / 10) * 1000);
+  }
+
+  const { bundlePrice, bundleCompareAtPrice, bundleSavingsPct, bundleSavingsAmount } = useMemo(() => {
+    if (!isBundle || !bundleBottles.length) {
+      return { bundlePrice: 0, bundleCompareAtPrice: 0, bundleSavingsPct: 0, bundleSavingsAmount: 0 };
+    }
+    const regularSum = bundleBottles.reduce((sum, bottle, idx) => {
+      const conc = selectedBottleConcentrations[idx] || 20;
+      return sum + getPriceForConcentration(bottle.name, conc);
+    }, 0);
+
+    const discounted = Math.round(regularSum * 0.9);
+    const savings = regularSum - discounted;
+    const pct = Math.round((savings / regularSum) * 100);
+
+    return {
+      bundlePrice: discounted,
+      bundleCompareAtPrice: regularSum,
+      bundleSavingsPct: pct,
+      bundleSavingsAmount: savings
+    };
+  }, [isBundle, bundleBottles, selectedBottleConcentrations]);
+
   const cartCount = cart.reduce((total, item) => total + item.quantity, 0);
   const cartTotal = cart.reduce((total, item) => total + Number(item.price) * item.quantity, 0);
-  const specifications = useMemo(() => [
-    ["Concentration", `${selectedVariant.concentrationPercent}%`],
-    ["Bottle size", `${product.volumeMl} ml`],
-    ["Notes", product.notes],
-    ["For", product.gender],
-    ["Character", product.character],
-    ["Best for", product.bestFor],
-    ["Shipping & Delivery", "1–3 business days dispatch. Standard delivery 3–7 business days nationwide. Complimentary shipping on all advance payments."],
-    ["Returns & Exchanges", "7-day returns for unopened, unsealed bottles in original packaging. Report damaged or leaking parcels within 48 hours."]
-  ], [product, selectedVariant]);
+  const specifications = useMemo(() => {
+    if (isBundle) {
+      return [
+        ["Bundle Type", "Bespoke Duo Fragrance Set (2 bottles)"],
+        ["Your Selection", bundleBottles.map((b, i) => `${b.name} (${selectedBottleConcentrations[i] || 20}%)`).join(" + ")],
+        ["Bottle Sizes", `${product.volumeMl} ml each (${(product.volumeMl || 50) * 2} ml total)`],
+        ["Fragrances", bundleBottles.map((b) => b.name).join(" and ")],
+        ["Notes", product.notes],
+        ["For", product.gender],
+        ["Character", product.character || "Layered, complementary, versatile"],
+        ["Best for", product.bestFor || "Day-to-night styling, signature layering, luxury gifting"],
+        ["Shipping & Delivery", "1–3 business days dispatch. Standard delivery 3–7 business days nationwide. Complimentary shipping on all advance payments."],
+        ["Returns & Exchanges", "7-day returns for unopened, unsealed bottles in original packaging. Report damaged or leaking parcels within 48 hours."]
+      ];
+    }
+    return [
+      ["Concentration", `${selectedVariant.concentrationPercent}%`],
+      ["Bottle size", `${product.volumeMl} ml`],
+      ["Notes", product.notes],
+      ["For", product.gender],
+      ["Character", product.character],
+      ["Best for", product.bestFor],
+      ["Shipping & Delivery", "1–3 business days dispatch. Standard delivery 3–7 business days nationwide. Complimentary shipping on all advance payments."],
+      ["Returns & Exchanges", "7-day returns for unopened, unsealed bottles in original packaging. Report damaged or leaking parcels within 48 hours."]
+    ];
+  }, [product, selectedVariant, isBundle, bundleBottles, selectedBottleConcentrations]);
 
   function addToCart() {
+    requireAuth(() => {
+      performAddToCart();
+    });
+  }
+
+  function performAddToCart() {
+    if (isBundle) {
+      const selections = bundleBottles.map((b, i) => ({
+        productName: b.name,
+        concentration: selectedBottleConcentrations[i] || 20
+      }));
+      const selectionText = selections.map((s) => `${s.productName} (${s.concentration}%)`).join(" · ");
+      const cartKey = `${product.id}:bundle:${selections.map((s) => `${s.productName}-${s.concentration}`).join(":")}`;
+
+      const activeVariant = product.variants?.find((v) => Number(v.price) === bundlePrice) || product.variants?.[0];
+
+      const newItem = {
+        id: product.id,
+        variantId: activeVariant?.id || null,
+        cartKey,
+        slug: product.slug,
+        name: product.name,
+        gender: product.gender,
+        volumeMl: product.volumeMl,
+        isBundle: true,
+        bundleSelections: selections,
+        bundleSelectionText: selectionText,
+        concentration: null,
+        price: bundlePrice,
+        compareAtPrice: bundleCompareAtPrice > bundlePrice ? bundleCompareAtPrice : null,
+        imageUrl: product.imageUrl,
+        quantity
+      };
+
+      setCart((items) => {
+        const existing = items.find((item) => itemKey(item) === cartKey);
+        if (existing) {
+          return items.map((item) => itemKey(item) === cartKey ? { ...item, quantity: item.quantity + quantity } : item);
+        }
+        return [...items, newItem];
+      });
+      setCartOpen(true);
+      return;
+    }
+
     const cartKey = `${product.id}:${selectedVariant.id}`;
     const newItem = {
       id: product.id,
@@ -143,10 +313,32 @@ export default function ProductDetail({ product }) {
             <span>XURA LAB</span>
             <small>FRAGRANCE</small>
           </Link>
-          <button className="cart-trigger" type="button" onClick={() => setCartOpen(true)} aria-label={`Open cart with ${cartCount} items`}>
-            <BagIcon />
-            <span>Cart ({cartCount})</span>
-          </button>
+          <div className="header-user-actions">
+            {isLoggedIn ? (
+              <button
+                className="client-auth-btn"
+                type="button"
+                onClick={logout}
+                title="Sign out of your account"
+              >
+                <span>Hi, {customer?.name?.split(" ")[0] || "Client"}</span>
+                <small>Sign Out</small>
+              </button>
+            ) : (
+              <button
+                className="client-auth-btn"
+                type="button"
+                onClick={() => openLoginModal()}
+                title="Client Sign In"
+              >
+                <span>Sign In</span>
+              </button>
+            )}
+            <button className="cart-trigger" type="button" onClick={() => setCartOpen(true)} aria-label={`Open cart with ${cartCount} items`}>
+              <BagIcon />
+              <span>Cart ({cartCount})</span>
+            </button>
+          </div>
           <button className="menu-trigger" type="button" onClick={() => setMobileOpen(true)} aria-label="Open navigation">
             <span />
             <span />
@@ -184,37 +376,133 @@ export default function ProductDetail({ product }) {
             </div>
             <section className="product-purchase" aria-labelledby="product-name">
               <h1 id="product-name">{product.name}</h1>
-              <p className="product-subtitle">{product.gender} · {product.volumeMl} ml</p>
+              <p className="product-subtitle">
+                {isBundle ? `Bespoke Fragrance Bundle · 2 × ${product.volumeMl} ml` : `${product.gender} · ${product.volumeMl} ml`}
+              </p>
 
-              <fieldset className="variant-picker">
-                <legend>Concentration, {product.volumeMl} ml</legend>
-                <div className="variant-options">
-                  {product.variants.map((variant) => {
-                    const vComp = Number(variant.compareAtPrice || 0);
-                    const vPr = Number(variant.price || 0);
-                    const vHasDiscount = vComp > 0 && vPr > 0 && vComp > vPr;
-                    const vPct = vHasDiscount ? Math.round(((vComp - vPr) / vComp) * 100) : 0;
+              {isBundle ? (
+                <div className="bundle-bottle-picker">
+                  <div className="bundle-picker-header">
+                    <span className="bundle-picker-kicker">CURATE YOUR SET</span>
+                    <h2 className="bundle-picker-title">Select Concentrations for Each Fragrance</h2>
+                    <p className="bundle-picker-subtitle">
+                      Choose your preferred concentration for both perfume bottles ({product.volumeMl} ml each).
+                    </p>
+                  </div>
 
-                    return (
-                      <button
-                        className={variant.id === selectedVariant.id ? "is-selected" : ""}
-                        key={variant.id}
-                        type="button"
-                        onClick={() => setSelectedVariant(variant)}
-                        aria-pressed={variant.id === selectedVariant.id}
-                      >
-                        <span>{variant.concentrationPercent}%</span>
-                        <small>{money(variant.price)}</small>
-                        {vHasDiscount && (
-                          <span className="variant-pill-badge">{vPct}% OFF</span>
-                        )}
-                      </button>
-                    );
-                  })}
+                  <div className="bundle-bottles-list">
+                    {bundleBottles.map((bottle, bottleIdx) => {
+                      const selectedConc = selectedBottleConcentrations[bottleIdx] || 20;
+                      return (
+                        <div key={bottle.name || bottleIdx} className="bundle-bottle-card">
+                          <div className="bundle-bottle-card-header">
+                            <div className="bundle-bottle-identity">
+                              <span className="bundle-bottle-badge">Bottle {bottleIdx + 1}</span>
+                              <h3 className="bundle-bottle-name">{bottle.name}</h3>
+                              {bottle.tagline && <span className="bundle-bottle-tagline">{bottle.tagline}</span>}
+                            </div>
+                            <span className="bundle-bottle-selected-tag">
+                              Concentration: <strong>{selectedConc}%</strong>
+                            </span>
+                          </div>
+
+                          <div className="bundle-conc-grid">
+                            {(bottle.concentrations || [10, 20, 40]).map((conc) => {
+                              const isSelected = selectedConc === conc;
+                              const concPrice = getPriceForConcentration(bottle.name, conc);
+                              return (
+                                <button
+                                  key={conc}
+                                  type="button"
+                                  className={`bundle-conc-pill ${isSelected ? "is-selected" : ""}`}
+                                  onClick={() => {
+                                    setSelectedBottleConcentrations((curr) => {
+                                      const next = [...curr];
+                                      next[bottleIdx] = conc;
+                                      return next;
+                                    });
+                                  }}
+                                  aria-pressed={isSelected}
+                                >
+                                  <strong>{conc}%</strong>
+                                  <small>{money(concPrice)}</small>
+                                  {isSelected && <span className="bundle-conc-active-dot">Selected</span>}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {/* Bundle Live Selection Summary */}
+                  <div className="bundle-set-summary-bar">
+                    <div className="bundle-set-summary-copy">
+                      <span>YOUR CUSTOM SET</span>
+                      <strong>
+                        {bundleBottles.map((b, i) => `${b.name} (${selectedBottleConcentrations[i] || 20}%)`).join(" + ")}
+                      </strong>
+                    </div>
+                    <div className="bundle-set-pricing-stack">
+                      {bundleCompareAtPrice > bundlePrice && (
+                        <s className="bundle-summary-cutoff">{money(bundleCompareAtPrice)}</s>
+                      )}
+                      <strong className="bundle-summary-price">{money(bundlePrice)}</strong>
+                      {bundleCompareAtPrice > bundlePrice && (
+                        <span className="bundle-summary-badge">{bundleSavingsPct}% BUNDLE SAVINGS</span>
+                      )}
+                    </div>
+                  </div>
                 </div>
-              </fieldset>
+              ) : (
+                <fieldset className="variant-picker">
+                  <legend>Concentration, {product.volumeMl} ml</legend>
+                  <div className="variant-options">
+                    {product.variants.map((variant) => {
+                      const vComp = Number(variant.compareAtPrice || 0);
+                      const vPr = Number(variant.price || 0);
+                      const vHasDiscount = vComp > 0 && vPr > 0 && vComp > vPr;
+                      const vPct = vHasDiscount ? Math.round(((vComp - vPr) / vComp) * 100) : 0;
 
-              {(() => {
+                      return (
+                        <button
+                          className={variant.id === selectedVariant.id ? "is-selected" : ""}
+                          key={variant.id}
+                          type="button"
+                          onClick={() => setSelectedVariant(variant)}
+                          aria-pressed={variant.id === selectedVariant.id}
+                        >
+                          <span>{variant.concentrationPercent}%</span>
+                          <small>{money(variant.price)}</small>
+                          {vHasDiscount && (
+                            <span className="variant-pill-badge">{vPct}% OFF</span>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </fieldset>
+              )}
+
+              {isBundle ? (
+                <div className="selected-price-block">
+                  <div className="selected-price-row">
+                    <p className="selected-price">{money(bundlePrice)}</p>
+                    {bundleCompareAtPrice > bundlePrice && (
+                      <>
+                        <s className="selected-price-cutoff">{money(bundleCompareAtPrice)}</s>
+                        <span className="selected-price-badge">{bundleSavingsPct}% OFF</span>
+                      </>
+                    )}
+                  </div>
+                  {bundleCompareAtPrice > bundlePrice && (
+                    <small className="selected-price-savings">
+                      Bundle savings: you save {money(bundleSavingsAmount)} ({bundleSavingsPct}%) with bespoke set pricing.
+                    </small>
+                  )}
+                </div>
+              ) : (() => {
                 const comp = Number(selectedVariant.compareAtPrice || 0);
                 const pr = Number(selectedVariant.price || 0);
                 const hasCutoff = comp > 0 && pr > 0 && comp > pr;
@@ -292,7 +580,7 @@ export default function ProductDetail({ product }) {
         <div className="shell footer-inner">
           <div className="footer-brand">
             <div className="footer-brand-mark">
-              <Image src="/images/xura-logo-4k.png" width={4096} height={4096} alt="Xura Lab" />
+              <Image src="/images/xura-brand-mark.png" width={1060} height={1090} alt="Xura Lab" unoptimized priority />
             </div>
             <span className="footer-brand-tagline">FRAGRANCE</span>
           </div>
@@ -364,6 +652,29 @@ export default function ProductDetail({ product }) {
           <Link href="/?gender=Bundles#collection">Bundles</Link>
           <Link href="/about">About us</Link>
           <Link href="/contact">Contact us</Link>
+          {isLoggedIn ? (
+            <button
+              type="button"
+              className="mobile-auth-btn"
+              onClick={() => {
+                setMobileOpen(false);
+                logout();
+              }}
+            >
+              Hi, {customer?.name?.split(" ")[0] || "Client"} · Sign Out
+            </button>
+          ) : (
+            <button
+              type="button"
+              className="mobile-auth-btn"
+              onClick={() => {
+                setMobileOpen(false);
+                openLoginModal();
+              }}
+            >
+              Client Sign In / Register
+            </button>
+          )}
         </nav>
       </div>
     </>

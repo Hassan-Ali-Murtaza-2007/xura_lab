@@ -14,6 +14,7 @@ export const productSummary = (product) => ({
   variantCount: product.variants.length,
   startingPrice: product.price,
   compareAtPrice: product.compareAtPrice || null,
+  bundleItems: product.bundleItems || null,
   isActive: product.isActive !== false,
   variants: product.variants
 });
@@ -26,6 +27,26 @@ export function parseProductInput(body) {
     throw Object.assign(new Error("Concentrations and prices are invalid."), { statusCode: 400 });
   }
 
+  let bundleItems = null;
+  if (body.bundleItems) {
+    try {
+      const parsed = typeof body.bundleItems === "string" ? JSON.parse(body.bundleItems) : body.bundleItems;
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        bundleItems = parsed.map((item) => ({
+          name: String(item.name || "").trim().slice(0, 120),
+          tagline: String(item.tagline || "").trim().slice(0, 255),
+          volumeMl: Number(item.volumeMl) || 50,
+          concentrations: Array.isArray(item.concentrations) && item.concentrations.length
+            ? item.concentrations.map(Number).filter((c) => Number.isInteger(c) && c > 0)
+            : [10, 20, 40],
+          defaultConcentration: Number(item.defaultConcentration) || 20
+        }));
+      }
+    } catch {
+      bundleItems = null;
+    }
+  }
+
   const product = {
     name: String(body.name || "").trim().slice(0, 120),
     tagline: String(body.tagline || "").trim().slice(0, 255),
@@ -36,6 +57,7 @@ export function parseProductInput(body) {
     notes: String(body.notes || "").trim().slice(0, 255),
     character: String(body.character || "").trim().slice(0, 255),
     bestFor: String(body.bestFor || "").trim().slice(0, 255),
+    bundleItems,
     variants: Array.isArray(rawVariants)
       ? rawVariants.map((variant) => {
           const price = Number(variant.price);
