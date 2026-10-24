@@ -4,6 +4,7 @@ import adminDashboardRoutes from "./admin-dashboard.routes.js";
 import adminOrdersRoutes from "./admin-orders.routes.js";
 import adminProductsRoutes from "./admin-products.routes.js";
 import adminPromosRoutes from "./admin-promos.routes.js";
+import adminCustomersRoutes from "./admin-customers.routes.js";
 import customerAuthRoutes from "./customer-auth.routes.js";
 import storefrontRoutes from "./storefront.routes.js";
 
@@ -18,6 +19,7 @@ apiRouter.use("/admin", adminDashboardRoutes);
 apiRouter.use("/admin", adminOrdersRoutes);
 apiRouter.use("/admin", adminProductsRoutes);
 apiRouter.use("/admin", adminPromosRoutes);
+apiRouter.use("/admin", adminCustomersRoutes);
 
 // Storefront & public routes mounted under /api
 apiRouter.use("/", storefrontRoutes);

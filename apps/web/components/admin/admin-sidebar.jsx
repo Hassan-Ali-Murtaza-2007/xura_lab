@@ -32,6 +32,14 @@ export function DashboardIcon({ name }) {
         <line x1="7" y1="7" x2="7.01" y2="7" />
       </>
     ),
+    customers: (
+      <>
+        <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+        <circle cx="9" cy="7" r="4" />
+        <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+        <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+      </>
+    ),
     store: (
       <>
         <path d="M4 10h16M6 10v10h12V10M3 10l2-6h14l2 6" />
@@ -73,6 +81,10 @@ export default function AdminSidebar({ activeTab = "overview" }) {
         <Link className={activeTab === "products" ? "is-active" : ""} href="/admin/products">
           <DashboardIcon name="products" />
           <span>Products</span>
+        </Link>
+        <Link className={activeTab === "customers" ? "is-active" : ""} href="/admin/customers">
+          <DashboardIcon name="customers" />
+          <span>Customers</span>
         </Link>
         <Link className={activeTab === "promos" ? "is-active" : ""} href="/admin/promos">
           <DashboardIcon name="promos" />

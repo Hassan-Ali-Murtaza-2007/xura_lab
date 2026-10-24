@@ -21,7 +21,9 @@ router.get("/dashboard", requireAdmin, async (request, response) => {
         totalProducts: localProducts.length,
         totalOrders: allOrders.length,
         pendingOrders,
-        revenue
+        revenue,
+        totalCustomers: 0,
+        gmailCustomers: 0
       },
       recentOrders: allOrders.slice(0, 10).map((o) => ({
         id: o.id,
@@ -32,6 +34,7 @@ router.get("/dashboard", requireAdmin, async (request, response) => {
         status: o.status,
         createdAt: o.createdAt
       })),
+      recentCustomers: [],
       products: localProducts.map((product) => ({
         id: product.id,
         slug: product.slug,
@@ -47,7 +50,15 @@ router.get("/dashboard", requireAdmin, async (request, response) => {
   }
 
   try {
-    const [productStatsResult, orderStatsResult, recentOrdersResult, productsResult, promoStatsResult] = await Promise.all([
+    const [
+      productStatsResult,
+      orderStatsResult,
+      recentOrdersResult,
+      productsResult,
+      promoStatsResult,
+      customerStatsResult,
+      recentCustomersResult
+    ] = await Promise.all([
       pool.query("SELECT COUNT(*) AS totalProducts FROM products WHERE is_active = TRUE"),
       pool.query(`SELECT COUNT(*) AS totalOrders,
                          COALESCE(SUM(status = 'pending'), 0) AS pendingOrders,
@@ -66,12 +77,29 @@ router.get("/dashboard", requireAdmin, async (request, response) => {
                   ORDER BY p.sort_order ASC, p.id ASC`),
       pool.query(`SELECT COUNT(*) AS totalPromos,
                          COALESCE(SUM(is_active = TRUE AND (expires_at IS NULL OR expires_at > NOW())), 0) AS activePromos
-                  FROM promo_codes`).catch(() => [[{ totalPromos: 0, activePromos: 0 }]])
+                  FROM promo_codes`).catch(() => [[{ totalPromos: 0, activePromos: 0 }]]),
+      pool.query(`SELECT COUNT(*) AS totalCustomers,
+                         COALESCE(SUM(LOWER(email) LIKE '%@gmail.com'), 0) AS gmailCustomers
+                  FROM customers`).catch(() => [[{ totalCustomers: 0, gmailCustomers: 0 }]]),
+      pool.query(`SELECT c.id, c.name, c.email, c.phone, c.created_at AS createdAt,
+                         COUNT(o.id) AS orderCount,
+                         COALESCE(SUM(o.total), 0) AS totalSpent
+                  FROM customers c
+                  LEFT JOIN orders o ON LOWER(o.email) = LOWER(c.email)
+                  GROUP BY c.id, c.name, c.email, c.phone, c.created_at
+                  ORDER BY c.created_at DESC LIMIT 6`).catch(() => [[]])
     ]);
     const productStats = productStatsResult[0][0] || {};
     const orderStats = orderStatsResult[0][0] || {};
     const promoStats = promoStatsResult?.[0]?.[0] || {};
-    const recentOrders = recentOrdersResult[0];
+    const customerStats = customerStatsResult?.[0]?.[0] || {};
+    const recentOrders = recentOrdersResult[0] || [];
+    const recentCustomers = (recentCustomersResult[0] || []).map((c) => ({
+      ...c,
+      isGmail: String(c.email || "").toLowerCase().endsWith("@gmail.com"),
+      orderCount: Number(c.orderCount || 0),
+      totalSpent: Number(c.totalSpent || 0)
+    }));
     const products = productsResult[0];
     response.json({
       source: "mysql",
@@ -82,9 +110,12 @@ router.get("/dashboard", requireAdmin, async (request, response) => {
         pendingOrders: Number(orderStats.pendingOrders || 0),
         revenue: Number(orderStats.revenue || 0),
         totalPromos: Number(promoStats.totalPromos || 0),
-        activePromos: Number(promoStats.activePromos || 0)
+        activePromos: Number(promoStats.activePromos || 0),
+        totalCustomers: Number(customerStats.totalCustomers || 0),
+        gmailCustomers: Number(customerStats.gmailCustomers || 0)
       },
       recentOrders,
+      recentCustomers,
       products
     });
   } catch (error) {

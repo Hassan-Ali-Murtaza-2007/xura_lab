@@ -221,8 +221,9 @@ export default function AdminDashboard() {
                 <StatCard index={1} label="Total revenue" value={money(data.stats.revenue)} detail="Across all recorded orders" />
                 <StatCard index={2} label="Orders" value={number.format(data.stats.totalOrders)} detail="All customer orders" />
                 <StatCard index={3} label="Pending" value={number.format(data.stats.pendingOrders)} detail="Awaiting confirmation" />
-                <StatCard index={4} label="Products" value={number.format(data.stats.totalProducts)} detail="Active fragrances" />
-                <StatCard index={5} label="Promo codes" value={number.format(data.stats.totalPromos || 0)} detail={`${data.stats.activePromos || 0} active campaigns`} />
+                <StatCard index={4} label="Customers" value={number.format(data.stats.totalCustomers || 0)} detail={`${data.stats.gmailCustomers || 0} Gmail accounts`} />
+                <StatCard index={5} label="Products" value={number.format(data.stats.totalProducts)} detail="Active fragrances" />
+                <StatCard index={6} label="Promo codes" value={number.format(data.stats.totalPromos || 0)} detail={`${data.stats.activePromos || 0} active campaigns`} />
               </section>
 
               <section className="admin-panel" id="orders">
@@ -253,6 +254,42 @@ export default function AdminDashboard() {
                   </div>
                 ) : (
                   <div className="admin-empty-state"><span>01</span><h3>No orders yet.</h3><p>New checkout orders will appear here automatically.</p></div>
+                )}
+              </section>
+
+              <section className="admin-panel" id="customers">
+                <div className="admin-panel-heading">
+                  <div><p className="admin-eyebrow">CUSTOMERS & GMAILS</p><h2>Recent Customer Registrations</h2></div>
+                  <div className="admin-heading-actions-wrap">
+                    <span>{data.recentCustomers?.length || 0} shown</span>
+                    <Link className="admin-panel-view-all-btn" href="/admin/customers">VIEW ALL CUSTOMERS ({data.stats.totalCustomers || 0}) →</Link>
+                  </div>
+                </div>
+                {data.recentCustomers?.length ? (
+                  <div className="admin-table-wrap">
+                    <table className="admin-table">
+                      <thead><tr><th>Customer</th><th>Email / Gmail</th><th>WhatsApp / Phone</th><th>Orders</th><th>Total Spent</th><th>Joined</th></tr></thead>
+                      <tbody>
+                        {data.recentCustomers.map((cust) => (
+                          <tr key={cust.id}>
+                            <td><strong>{cust.name}</strong></td>
+                            <td>
+                              <div className="admin-customer-email-cell">
+                                <a className="admin-email-link" href={`mailto:${cust.email}`}>{cust.email}</a>
+                                {cust.isGmail && <span className="admin-badge-gmail">GMAIL</span>}
+                              </div>
+                            </td>
+                            <td>{cust.phone || "—"}</td>
+                            <td><strong>{cust.orderCount}</strong> {cust.orderCount === 1 ? "order" : "orders"}</td>
+                            <td>{money(cust.totalSpent)}</td>
+                            <td>{new Intl.DateTimeFormat("en-PK", { day: "2-digit", month: "short", year: "numeric" }).format(new Date(cust.createdAt))}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  <div className="admin-empty-state"><span>01</span><h3>No customer accounts yet.</h3><p>When customers sign up with their Gmail or email, they will appear here automatically.</p></div>
                 )}
               </section>
 

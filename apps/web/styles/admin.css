@@ -3151,3 +3151,361 @@
     align-items: flex-start;
   }
 }
+
+/* ==========================================================================
+   Customer Directory & Gmail Accounts Styling
+   ========================================================================== */
+
+.admin-badge-gmail {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  background: #ea4335;
+  color: #ffffff;
+  font-size: 8.5px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  padding: 2px 6px;
+  border-radius: 3px;
+  text-transform: uppercase;
+  vertical-align: middle;
+  line-height: 1.2;
+}
+
+.admin-badge-provider {
+  display: inline-block;
+  background: #e7ece8;
+  color: #3b5042;
+  font-size: 8.5px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  padding: 2px 6px;
+  border-radius: 3px;
+  text-transform: capitalize;
+  vertical-align: middle;
+  line-height: 1.2;
+}
+
+.admin-customer-identity-cell {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.admin-customer-avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: #39463f;
+  color: #f4f3ef;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  flex-shrink: 0;
+}
+
+.admin-customer-avatar.large {
+  width: 52px;
+  height: 52px;
+  font-size: 16px;
+  background: #25332c;
+}
+
+.admin-customer-name {
+  display: block;
+  font-size: 14px;
+  color: var(--ink);
+}
+
+.admin-customer-id {
+  font-size: 10px;
+  color: #79837c;
+  letter-spacing: 0.05em;
+}
+
+.admin-customer-email-cell {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex-wrap: wrap;
+}
+
+.admin-email-link {
+  color: #1a4f32;
+  font-weight: 600;
+  text-decoration: underline;
+  text-decoration-color: rgba(26, 79, 50, 0.3);
+  text-underline-offset: 3px;
+  word-break: break-all;
+}
+
+.admin-email-link:hover {
+  color: #0d2b1b;
+  text-decoration-color: #0d2b1b;
+}
+
+.admin-email-copy-btn {
+  background: rgba(57, 70, 63, 0.08);
+  border: 1px solid rgba(57, 70, 63, 0.15);
+  border-radius: 3px;
+  padding: 2px 6px;
+  font-size: 9.5px;
+  font-weight: 600;
+  color: #444;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  line-height: 1.2;
+}
+
+.admin-email-copy-btn:hover {
+  background: #39463f;
+  color: #fff;
+  border-color: #39463f;
+}
+
+.admin-email-copy-btn.is-copied {
+  background: #2d6a4f;
+  color: #fff;
+  border-color: #2d6a4f;
+}
+
+.admin-customer-phone-cell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.admin-phone-link {
+  color: inherit;
+  text-decoration: none;
+}
+
+.admin-whatsapp-btn {
+  display: inline-block;
+  background: #25d366;
+  color: #fff;
+  font-size: 9px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 3px;
+  text-decoration: none;
+  line-height: 1.2;
+}
+
+.admin-whatsapp-btn:hover {
+  background: #1eb956;
+}
+
+.admin-quick-actions-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.admin-action-pill-btn {
+  background: #f1f0eb;
+  border: 1px solid rgba(57, 70, 63, 0.2);
+  border-radius: 4px;
+  padding: 8px 14px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #2c3831;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+}
+
+.admin-action-pill-btn:hover:not(:disabled) {
+  background: #2c3831;
+  color: #f4f3ef;
+  border-color: #2c3831;
+}
+
+.admin-action-pill-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.admin-row-action-btns {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.admin-icon-pill-btn {
+  background: #f4f3ef;
+  border: 1px solid rgba(57, 70, 63, 0.18);
+  border-radius: 3px;
+  padding: 4px 8px;
+  font-size: 10px;
+  font-weight: 600;
+  color: #2c3831;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.admin-icon-pill-btn:hover {
+  background: #2c3831;
+  color: #fff;
+  border-color: #2c3831;
+}
+
+.admin-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(18, 24, 21, 0.65);
+  backdrop-filter: blur(4px);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.admin-customer-modal {
+  background: #ffffff;
+  border-radius: 8px;
+  max-width: 680px;
+  width: 100%;
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);
+  overflow: hidden;
+  animation: adminModalFadeIn 0.2s ease;
+}
+
+@keyframes adminModalFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.admin-customer-modal-header {
+  padding: 22px 26px;
+  border-bottom: 1px solid #e7e6e0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #faf9f6;
+}
+
+.admin-customer-modal-title {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.admin-customer-modal-title h2 {
+  margin: 0;
+  font-family: var(--serif);
+  font-size: 22px;
+  color: #1d2521;
+}
+
+.admin-customer-modal-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.admin-customer-modal-email {
+  font-size: 13px;
+  font-weight: 600;
+  color: #1a4f32;
+}
+
+.admin-modal-close-btn {
+  background: transparent;
+  border: none;
+  font-size: 18px;
+  cursor: pointer;
+  color: #666;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+}
+
+.admin-modal-close-btn:hover {
+  background: rgba(0, 0, 0, 0.06);
+  color: #000;
+}
+
+.admin-customer-modal-body {
+  padding: 24px 26px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.admin-customer-info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 14px;
+  margin-bottom: 24px;
+}
+
+.admin-customer-info-box {
+  background: #f8f8f5;
+  border: 1px solid #e6e5df;
+  border-radius: 6px;
+  padding: 12px 14px;
+}
+
+.admin-customer-info-box small {
+  display: block;
+  font-size: 10px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #727a75;
+  margin-bottom: 4px;
+}
+
+.admin-customer-info-box strong {
+  display: block;
+  font-size: 14px;
+  color: #1d2521;
+}
+
+.admin-modal-wa-link {
+  display: inline-block;
+  margin-top: 6px;
+  font-size: 10.5px;
+  font-weight: 600;
+  color: #1a6f3b;
+  text-decoration: underline;
+}
+
+.admin-customer-orders-section h3 {
+  font-size: 13px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #555e58;
+  margin: 0 0 12px 0;
+}
+
+.admin-customer-modal-footer {
+  padding: 16px 26px;
+  border-top: 1px solid #e7e6e0;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  background: #faf9f6;
+}
