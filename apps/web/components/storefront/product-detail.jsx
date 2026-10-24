@@ -239,11 +239,14 @@ export default function ProductDetail({ product }) {
       return sum + (comp > 0 ? comp : getPriceForConcentration(bottle.name, conc));
     }, 0);
 
-    const discountRate = (100 - (Number(product.bundleDiscountPercent) || 10)) / 100;
+    const configuredDiscount = Number.isFinite(Number(product.bundleDiscountPercent))
+      ? Number(product.bundleDiscountPercent)
+      : 10;
+    const discountRate = (100 - configuredDiscount) / 100;
     const discounted = Math.round(regularSum * discountRate);
     const effectiveCompareAt = compareAtSum > discounted ? compareAtSum : regularSum;
     const savings = effectiveCompareAt - discounted;
-    const pct = Math.round((savings / effectiveCompareAt) * 100);
+    const pct = effectiveCompareAt > 0 ? Math.round((savings / effectiveCompareAt) * 100) : configuredDiscount;
 
     return {
       bundlePrice: discounted,
@@ -525,15 +528,6 @@ export default function ProductDetail({ product }) {
                       <strong>
                         {bundleBottles.map((b, i) => `${b.name} (${selectedBottleConcentrations[i] || 20}%)`).join(" + ")}
                       </strong>
-                    </div>
-                    <div className="bundle-set-pricing-stack">
-                      {bundleCompareAtPrice > bundlePrice && (
-                        <s className="bundle-summary-cutoff">{money(bundleCompareAtPrice)}</s>
-                      )}
-                      <strong className="bundle-summary-price">{money(bundlePrice)}</strong>
-                      {bundleCompareAtPrice > bundlePrice && (
-                        <span className="bundle-summary-badge">{bundleSavingsPct}% BUNDLE SAVINGS</span>
-                      )}
                     </div>
                   </div>
                 </div>

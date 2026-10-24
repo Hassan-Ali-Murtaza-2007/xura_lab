@@ -53,8 +53,8 @@ router.post("/products", requireAdmin, productImageUpload.array("images", 5), as
       const [productResult] = await connection.query(
         `INSERT INTO products (
            slug, name, tagline, gender, volume_ml, price, compare_at_price, image_url, sort_order,
-           \`lead\`, description, notes, \`character\`, best_for, bundle_items, is_active
-         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE)`,
+           \`lead\`, description, notes, \`character\`, best_for, bundle_items, bundle_discount_percent, is_active
+         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE)`,
         [
           slug,
           productInput.name,
@@ -70,7 +70,8 @@ router.post("/products", requireAdmin, productImageUpload.array("images", 5), as
           productInput.notes,
           productInput.character,
           productInput.bestFor,
-          productInput.bundleItems ? JSON.stringify(productInput.bundleItems) : null
+          productInput.bundleItems ? JSON.stringify(productInput.bundleItems) : null,
+          productInput.bundleDiscountPercent ?? 10
         ]
       );
       const productId = productResult.insertId;
@@ -130,7 +131,8 @@ router.get("/products", requireAdmin, async (_request, response) => {
     const [products] = await pool.query(
       `SELECT p.id, p.slug, p.name, p.tagline, p.gender, p.volume_ml AS volumeMl,
               p.price, p.compare_at_price AS compareAtPrice, p.image_url AS imageUrl, p.lead, p.description, p.notes,
-              p.character, p.best_for AS bestFor, p.sort_order AS sortOrder,
+              p.character, p.best_for AS bestFor, p.bundle_items AS bundleItems,
+              p.bundle_discount_percent AS bundleDiscountPercent, p.sort_order AS sortOrder,
               p.is_active AS isActive, p.created_at AS createdAt
        FROM products p
        ORDER BY p.sort_order ASC, p.id ASC`
@@ -183,7 +185,8 @@ router.get("/products/:id", requireAdmin, async (request, response) => {
     const [products] = await pool.query(
       `SELECT id, slug, name, tagline, gender, volume_ml AS volumeMl, price, compare_at_price AS compareAtPrice,
               image_url AS imageUrl, sort_order AS sortOrder, \`lead\`, description,
-              notes, \`character\`, best_for AS bestFor, bundle_items AS bundleItems, is_active AS isActive
+              notes, \`character\`, best_for AS bestFor, bundle_items AS bundleItems,
+              bundle_discount_percent AS bundleDiscountPercent, is_active AS isActive
        FROM products WHERE id = ? AND is_active = TRUE LIMIT 1`,
       [productId]
     );
@@ -290,7 +293,8 @@ router.put("/products/:id", requireAdmin, productImageUpload.array("images", 5),
       await connection.query(
         `UPDATE products SET
            name = ?, tagline = ?, gender = ?, volume_ml = ?, price = ?, compare_at_price = ?, image_url = ?,
-           \`lead\` = ?, description = ?, notes = ?, \`character\` = ?, best_for = ?, bundle_items = ?
+           \`lead\` = ?, description = ?, notes = ?, \`character\` = ?, best_for = ?, bundle_items = ?,
+           bundle_discount_percent = ?
          WHERE id = ?`,
         [
           productInput.name,
@@ -306,6 +310,7 @@ router.put("/products/:id", requireAdmin, productImageUpload.array("images", 5),
           productInput.character,
           productInput.bestFor,
           productInput.bundleItems ? JSON.stringify(productInput.bundleItems) : null,
+          productInput.bundleDiscountPercent ?? 10,
           productId
         ]
       );

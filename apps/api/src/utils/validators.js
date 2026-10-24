@@ -15,6 +15,7 @@ export const productSummary = (product) => ({
   startingPrice: product.price,
   compareAtPrice: product.compareAtPrice || null,
   bundleItems: product.bundleItems || null,
+  bundleDiscountPercent: Number.isFinite(Number(product.bundleDiscountPercent)) ? Number(product.bundleDiscountPercent) : 10,
   isActive: product.isActive !== false,
   variants: product.variants
 });
@@ -89,6 +90,12 @@ export function parseProductInput(body) {
     }
   }
 
+  const rawDiscount = Number(body.bundleDiscountPercent);
+  const bundleDiscountPercent =
+    Number.isFinite(rawDiscount) && rawDiscount >= 0 && rawDiscount <= 90
+      ? Math.round(rawDiscount)
+      : 10;
+
   const product = {
     name: String(body.name || "").trim().slice(0, 120),
     tagline: String(body.tagline || "").trim().slice(0, 255),
@@ -100,6 +107,7 @@ export function parseProductInput(body) {
     character: String(body.character || "").trim().slice(0, 255),
     bestFor: String(body.bestFor || "").trim().slice(0, 255),
     bundleItems,
+    bundleDiscountPercent,
     variants: Array.isArray(rawVariants)
       ? rawVariants.map((variant) => {
           const price = Number(variant.price);

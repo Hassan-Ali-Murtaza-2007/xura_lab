@@ -74,7 +74,8 @@ router.get("/products", async (_request, response) => {
         notes,
         \`character\`,
         best_for AS bestFor,
-        bundle_items AS bundleItems
+        bundle_items AS bundleItems,
+        bundle_discount_percent AS bundleDiscountPercent
       FROM products
       WHERE is_active = TRUE
       ORDER BY sort_order ASC, id ASC
@@ -131,7 +132,8 @@ router.get("/products/:slug", async (request, response) => {
   try {
     const [products] = await pool.query(
       `SELECT id, slug, name, tagline, gender, volume_ml AS volumeMl, price, compare_at_price AS compareAtPrice, image_url AS imageUrl,
-              sort_order AS sortOrder, \`lead\`, description, notes, \`character\`, best_for AS bestFor, bundle_items AS bundleItems
+              sort_order AS sortOrder, \`lead\`, description, notes, \`character\`, best_for AS bestFor,
+              bundle_items AS bundleItems, bundle_discount_percent AS bundleDiscountPercent
        FROM products WHERE slug = ? AND is_active = TRUE LIMIT 1`,
       [request.params.slug]
     );

@@ -112,7 +112,7 @@ export default function AdminProductForm({ product = null, onCancel, onCreated, 
     ];
   });
   const [bundleDiscountPercent, setBundleDiscountPercent] = useState(() => {
-    return Number(product?.bundleDiscountPercent) || 10;
+    return Number.isFinite(Number(product?.bundleDiscountPercent)) ? Number(product.bundleDiscountPercent) : 10;
   });
   const [simulatedSelections, setSimulatedSelections] = useState([40, 20]);
   const [variants, setVariants] = useState(() => variantsForProduct(product));
@@ -346,6 +346,7 @@ export default function AdminProductForm({ product = null, onCancel, onCreated, 
     setExistingImageUrls([]);
     setImages([]);
     setPrimaryImageIndex(0);
+    setBundleDiscountPercent(10);
     if (imageInput.current) imageInput.current.value = "";
   }
 
