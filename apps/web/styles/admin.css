@@ -2906,3 +2906,248 @@
   font-weight: 500;
   color: #a43e3e;
 }
+
+/* ==========================================================================
+   Bundle Bottle Concentration & Pricing Studio
+   ========================================================================== */
+
+.admin-bundle-pricing-section {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.admin-bundle-bottle-cards-container {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 100%;
+}
+
+.admin-bundle-bottle-editor-card {
+  border: 1px solid rgba(57, 70, 63, 0.22);
+  background: rgba(255, 255, 255, 0.7);
+  padding: 20px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.03);
+}
+
+.admin-bundle-bottle-card-top {
+  border-bottom: 1px solid rgba(57, 70, 63, 0.16);
+  padding-bottom: 16px;
+  margin-bottom: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.admin-bundle-bottle-badge-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.admin-bundle-bottle-idx-pill {
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--paper);
+  background: var(--ink);
+  padding: 3px 8px;
+  border-radius: 2px;
+}
+
+.admin-bundle-bottle-badge-row h5 {
+  margin: 0;
+  font-family: var(--serif);
+  font-size: 20px;
+  font-weight: 400;
+  color: var(--ink);
+}
+
+.admin-bundle-bottle-badge-row small {
+  color: #727a75;
+  font-size: 12px;
+}
+
+.admin-bundle-bottle-inputs-row {
+  display: grid;
+  grid-template-columns: 1fr 1.6fr;
+  gap: 14px;
+}
+
+/* Bundle combo simulator box */
+.admin-bundle-combo-simulator-box {
+  background: rgba(30, 77, 43, 0.05);
+  border: 1px solid rgba(30, 77, 43, 0.22);
+  padding: 20px;
+  margin-top: 10px;
+}
+
+.admin-bundle-simulator-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  border-bottom: 1px solid rgba(30, 77, 43, 0.16);
+  padding-bottom: 14px;
+  margin-bottom: 16px;
+}
+
+.admin-bundle-simulator-header h5 {
+  margin: 0 0 4px;
+  font-size: 15px;
+  font-weight: 700;
+  color: #194424;
+  letter-spacing: -0.01em;
+}
+
+.admin-bundle-simulator-header p {
+  margin: 0;
+  font-size: 12px;
+  color: #4f6355;
+  line-height: 1.4;
+}
+
+.admin-bundle-discount-input-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #194424;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.admin-bundle-discount-input-wrap {
+  display: inline-flex;
+  align-items: center;
+  background: #fff;
+  border: 1px solid rgba(30, 77, 43, 0.35);
+  padding: 0 8px;
+  height: 38px;
+}
+
+.admin-bundle-discount-input-wrap input {
+  width: 48px;
+  border: none;
+  outline: none;
+  font-size: 14px;
+  font-weight: 700;
+  color: #194424;
+  text-align: right;
+  padding: 0;
+}
+
+.admin-bundle-discount-input-wrap small {
+  margin-left: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  color: #194424;
+}
+
+.admin-bundle-live-tester {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.admin-bundle-tester-title {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #194424;
+}
+
+.admin-bundle-tester-selectors {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 14px;
+}
+
+.admin-bundle-tester-selector-col label {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  color: #2b3930;
+  margin-bottom: 4px;
+}
+
+.admin-bundle-tester-selector-col select {
+  width: 100%;
+  height: 40px;
+  padding: 0 10px;
+  border: 1px solid rgba(57, 70, 63, 0.3);
+  background: #fff;
+  font-size: 13px;
+  color: var(--ink);
+  outline: none;
+}
+
+.admin-bundle-calc-results-pill {
+  margin-top: 6px;
+  padding: 14px 18px;
+  background: #fff;
+  border: 1px solid rgba(30, 77, 43, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 14px;
+}
+
+.admin-bundle-calc-names strong {
+  display: block;
+  font-size: 14px;
+  color: var(--ink);
+  font-family: var(--serif);
+}
+
+.admin-bundle-calc-names span {
+  display: block;
+  font-size: 11px;
+  color: #6d7671;
+  margin-top: 2px;
+}
+
+.admin-bundle-calc-price {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.admin-bundle-calc-price s {
+  color: #8c938e;
+  font-size: 14px;
+}
+
+.admin-bundle-calc-price strong {
+  font-size: 20px;
+  color: #194424;
+  font-weight: 700;
+}
+
+.admin-badge-discount {
+  background: #1e4d2b;
+  color: #fff;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  padding: 2px 7px;
+  border-radius: 2px;
+}
+
+@media (max-width: 720px) {
+  .admin-bundle-bottle-inputs-row {
+    grid-template-columns: 1fr;
+  }
+  .admin-bundle-simulator-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}

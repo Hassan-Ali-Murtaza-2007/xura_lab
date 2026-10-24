@@ -21,6 +21,43 @@ const defaultVariants = () => [
   { key: "variant-3", concentrationPercent: "40", price: "5500", compareAtPrice: "" }
 ];
 
+function defaultPriceForConc(conc) {
+  const c = Number(conc);
+  if (c === 10) return 2500;
+  if (c === 20) return 3500;
+  if (c === 25) return 4500;
+  if (c === 40) return 5500;
+  return 2500 + Math.round((c / 10) * 1000);
+}
+
+function normalizeBottleConcentrations(rawConcs) {
+  if (!Array.isArray(rawConcs) || rawConcs.length === 0) {
+    return [
+      { key: "c-10", concentrationPercent: 10, price: 2500, compareAtPrice: "" },
+      { key: "c-20", concentrationPercent: 20, price: 3500, compareAtPrice: "" },
+      { key: "c-40", concentrationPercent: 40, price: 5500, compareAtPrice: "" }
+    ];
+  }
+  return rawConcs.map((item, idx) => {
+    if (typeof item === "object" && item !== null) {
+      const conc = Number(item.concentrationPercent || item.concentration || 20);
+      return {
+        key: item.key || `c-${conc}-${idx}`,
+        concentrationPercent: conc,
+        price: Number(item.price) || defaultPriceForConc(conc),
+        compareAtPrice: item.compareAtPrice ? Number(item.compareAtPrice) : ""
+      };
+    }
+    const conc = Number(item);
+    return {
+      key: `c-${conc}-${idx}`,
+      concentrationPercent: conc,
+      price: defaultPriceForConc(conc),
+      compareAtPrice: ""
+    };
+  });
+}
+
 function fieldsForProduct(product) {
   if (!product) return defaultFields;
   return {
@@ -52,13 +89,32 @@ export default function AdminProductForm({ product = null, onCancel, onCreated, 
   const [fields, setFields] = useState(() => fieldsForProduct(product));
   const [bundleBottles, setBundleBottles] = useState(() => {
     if (product?.bundleItems && Array.isArray(product.bundleItems) && product.bundleItems.length > 0) {
-      return product.bundleItems;
+      return product.bundleItems.map((b, i) => ({
+        name: b.name || `Fragrance ${i + 1}`,
+        tagline: b.tagline || "",
+        volumeMl: b.volumeMl || product?.volumeMl || 50,
+        concentrations: normalizeBottleConcentrations(b.concentrations)
+      }));
     }
     return [
-      { name: "Nyra", tagline: "Luminous white florals, roasted coffee & vanilla", volumeMl: 50, concentrations: [10, 20, 40], defaultConcentration: 20 },
-      { name: "Arven", tagline: "Rich oud, warm amber & refined leather", volumeMl: 50, concentrations: [10, 20, 40], defaultConcentration: 10 }
+      {
+        name: "Nyra",
+        tagline: "Luminous white florals, roasted coffee & vanilla",
+        volumeMl: 50,
+        concentrations: normalizeBottleConcentrations([10, 20, 40])
+      },
+      {
+        name: "Arven",
+        tagline: "Rich oud, warm amber & refined leather",
+        volumeMl: 50,
+        concentrations: normalizeBottleConcentrations([10, 20, 40])
+      }
     ];
   });
+  const [bundleDiscountPercent, setBundleDiscountPercent] = useState(() => {
+    return Number(product?.bundleDiscountPercent) || 10;
+  });
+  const [simulatedSelections, setSimulatedSelections] = useState([40, 20]);
   const [variants, setVariants] = useState(() => variantsForProduct(product));
   const [existingImageUrls, setExistingImageUrls] = useState(() => (
     product?.images?.length ? product.images : (product?.imageUrl ? [product.imageUrl] : [])
@@ -132,6 +188,107 @@ export default function AdminProductForm({ product = null, onCancel, onCreated, 
     ]);
   }
 
+  function updateBottleField(bottleIdx, field, value) {
+    setBundleBottles((curr) => {
+      const next = [...curr];
+      next[bottleIdx] = { ...next[bottleIdx], [field]: value };
+      return next;
+    });
+  }
+
+  function updateBottleConc(bottleIdx, concKey, field, value) {
+    setBundleBottles((curr) => {
+      const next = [...curr];
+      const bottle = { ...next[bottleIdx] };
+      bottle.concentrations = bottle.concentrations.map((c) =>
+        c.key === concKey ? { ...c, [field]: value } : c
+      );
+      next[bottleIdx] = bottle;
+      return next;
+    });
+  }
+
+  function applyBottleDiscountPreset(bottleIdx, concKey, percent) {
+    setBundleBottles((curr) => {
+      const next = [...curr];
+      const bottle = { ...next[bottleIdx] };
+      bottle.concentrations = bottle.concentrations.map((c) => {
+        if (c.key !== concKey) return c;
+        let original = Number(c.compareAtPrice);
+        if (!original || original <= 0) {
+          original = Number(c.price) || 0;
+        }
+        if (!original || original <= 0) return c;
+        const discountAmount = Math.round((original * percent) / 100);
+        const salePrice = Math.max(1, original - discountAmount);
+        return {
+          ...c,
+          compareAtPrice: String(original),
+          price: String(salePrice)
+        };
+      });
+      next[bottleIdx] = bottle;
+      return next;
+    });
+  }
+
+  function addBottleConc(bottleIdx) {
+    setBundleBottles((curr) => {
+      const next = [...curr];
+      const bottle = { ...next[bottleIdx] };
+      const nextConc = 30;
+      bottle.concentrations = [
+        ...bottle.concentrations,
+        {
+          key: `c-new-${Date.now()}`,
+          concentrationPercent: nextConc,
+          price: defaultPriceForConc(nextConc),
+          compareAtPrice: ""
+        }
+      ];
+      next[bottleIdx] = bottle;
+      return next;
+    });
+  }
+
+  function removeBottleConc(bottleIdx, concKey) {
+    setBundleBottles((curr) => {
+      const next = [...curr];
+      const bottle = { ...next[bottleIdx] };
+      if (bottle.concentrations.length <= 1) return curr;
+      bottle.concentrations = bottle.concentrations.filter((c) => c.key !== concKey);
+      next[bottleIdx] = bottle;
+      return next;
+    });
+  }
+
+  function addBundleBottle() {
+    setBundleBottles((curr) => [
+      ...curr,
+      {
+        name: `Fragrance ${curr.length + 1}`,
+        tagline: "",
+        volumeMl: fields.volumeMl || 50,
+        concentrations: normalizeBottleConcentrations([10, 20, 40])
+      }
+    ]);
+  }
+
+  function removeBundleBottle(bottleIdx) {
+    setBundleBottles((curr) => (curr.length > 2 ? curr.filter((_, i) => i !== bottleIdx) : curr));
+  }
+
+  const simPrices = useMemo(() => {
+    return bundleBottles.map((bottle, idx) => {
+      const selectedConc = simulatedSelections[idx] || bottle.concentrations[0]?.concentrationPercent || 20;
+      const found = bottle.concentrations.find((c) => Number(c.concentrationPercent) === Number(selectedConc)) || bottle.concentrations[0];
+      return Number(found?.price || defaultPriceForConc(selectedConc));
+    });
+  }, [bundleBottles, simulatedSelections]);
+
+  const simTotalStandard = simPrices.reduce((sum, p) => sum + p, 0);
+  const simTotalDiscounted = Math.round(simTotalStandard * ((100 - bundleDiscountPercent) / 100));
+
   function chooseImages(event) {
     const selected = Array.from(event.target.files || []);
     if (!selected.length) return;
@@ -203,20 +360,48 @@ export default function AdminProductForm({ product = null, onCancel, onCreated, 
     setStatus("");
     const body = new FormData();
     Object.entries(fields).forEach(([key, value]) => body.append(key, value));
-    body.append(
-      "variants",
-      JSON.stringify(
-        variants.map(({ concentrationPercent, price, compareAtPrice }) => ({
-          concentrationPercent,
-          price,
-          compareAtPrice: compareAtPrice && Number(compareAtPrice) > Number(price) ? compareAtPrice : null
-        }))
-      )
-    );
-    body.append("primaryImageIndex", String(primaryImageIndex));
+    let variantsToSubmit = variants.map(({ concentrationPercent, price, compareAtPrice }) => ({
+      concentrationPercent,
+      price,
+      compareAtPrice: compareAtPrice && Number(compareAtPrice) > Number(price) ? compareAtPrice : null
+    }));
+
     if (fields.gender === "Bundles") {
-      body.append("bundleItems", JSON.stringify(bundleBottles));
+      const serializedBundleItems = bundleBottles.map((b) => ({
+        name: (b.name || "").trim(),
+        tagline: (b.tagline || "").trim(),
+        volumeMl: Number(b.volumeMl) || Number(fields.volumeMl) || 50,
+        concentrations: b.concentrations.map((c) => ({
+          concentrationPercent: Number(c.concentrationPercent),
+          price: Number(c.price),
+          compareAtPrice: c.compareAtPrice && Number(c.compareAtPrice) > Number(c.price) ? Number(c.compareAtPrice) : null
+        })),
+        defaultConcentration: Number(b.concentrations[0]?.concentrationPercent) || 20
+      }));
+      body.append("bundleItems", JSON.stringify(serializedBundleItems));
+      body.append("bundleDiscountPercent", String(bundleDiscountPercent));
+
+      // Build representative combo variants for the database
+      const b1 = bundleBottles[0];
+      const b2 = bundleBottles[1];
+      if (b1 && b2) {
+        const distinctConcs = [10, 20, 40];
+        variantsToSubmit = distinctConcs.map((conc) => {
+          const p1 = Number(b1.concentrations.find((c) => Number(c.concentrationPercent) === conc)?.price) || defaultPriceForConc(conc);
+          const p2 = Number(b2.concentrations.find((c) => Number(c.concentrationPercent) === conc)?.price) || defaultPriceForConc(conc);
+          const sum = p1 + p2;
+          const discounted = Math.round(sum * ((100 - bundleDiscountPercent) / 100));
+          return {
+            concentrationPercent: conc,
+            price: discounted,
+            compareAtPrice: sum
+          };
+        });
+      }
     }
+
+    body.append("variants", JSON.stringify(variantsToSubmit));
+    body.append("primaryImageIndex", String(primaryImageIndex));
     body.append("retainedImages", JSON.stringify(existingImageUrls));
     images.forEach((image) => body.append("images", image));
 
@@ -269,65 +454,6 @@ export default function AdminProductForm({ product = null, onCancel, onCreated, 
             <label className="admin-field"><span>Bottle size (ml)</span><input name="volumeMl" type="number" min="1" max="1000" value={fields.volumeMl} onChange={updateField} required /></label>
           </div>
         </section>
-
-        {fields.gender === "Bundles" && (
-          <section className="admin-form-section admin-bundle-config-section">
-            <div className="admin-form-section-heading">
-              <span>01B</span>
-              <div>
-                <h4>Bundle Fragrance Bottles</h4>
-                <p>Define the fragrance bottles included in this bundle. Customers will pick the concentration for each.</p>
-              </div>
-            </div>
-            <div className="admin-bundle-bottles-list" style={{ display: "flex", flexDirection: "column", gap: "12px", width: "100%" }}>
-              {bundleBottles.map((bottle, idx) => (
-                <div key={idx} style={{ border: "1px solid rgba(57, 70, 63, 0.2)", padding: "14px", background: "rgba(255, 255, 255, 0.5)", display: "grid", gridTemplateColumns: "1fr 1.5fr auto", gap: "12px", alignItems: "end" }}>
-                  <label className="admin-field" style={{ margin: 0 }}>
-                    <span>Bottle {idx + 1} Fragrance</span>
-                    <input
-                      value={bottle.name}
-                      onChange={(e) => {
-                        const next = [...bundleBottles];
-                        next[idx] = { ...next[idx], name: e.target.value };
-                        setBundleBottles(next);
-                      }}
-                      placeholder="e.g. Nyra"
-                      required
-                    />
-                  </label>
-                  <label className="admin-field" style={{ margin: 0 }}>
-                    <span>Notes / Scent Tagline</span>
-                    <input
-                      value={bottle.tagline}
-                      onChange={(e) => {
-                        const next = [...bundleBottles];
-                        next[idx] = { ...next[idx], tagline: e.target.value };
-                        setBundleBottles(next);
-                      }}
-                      placeholder="e.g. Luminous white florals, roasted coffee & vanilla"
-                    />
-                  </label>
-                  {bundleBottles.length > 2 && (
-                    <button
-                      type="button"
-                      style={{ padding: "8px 12px", background: "none", border: "1px solid #c0392b", color: "#c0392b", cursor: "pointer", fontSize: "11px", height: "38px" }}
-                      onClick={() => setBundleBottles(bundleBottles.filter((_, i) => i !== idx))}
-                    >
-                      Remove
-                    </button>
-                  )}
-                </div>
-              ))}
-              <button
-                type="button"
-                style={{ padding: "8px 16px", background: "var(--ink)", color: "var(--paper)", border: "none", cursor: "pointer", fontSize: "11px", letterSpacing: "0.08em", alignSelf: "flex-start" }}
-                onClick={() => setBundleBottles([...bundleBottles, { name: "", tagline: "", volumeMl: 50, concentrations: [10, 20, 40], defaultConcentration: 20 }])}
-              >
-                + Add Another Bottle
-              </button>
-            </div>
-          </section>
-        )}
 
         <section className="admin-form-section admin-image-section">
           <div className="admin-form-section-heading"><span>02</span><div><h4>Customer images</h4><p>Add up to 5 images (maximum 5)</p></div></div>
@@ -403,127 +529,382 @@ export default function AdminProductForm({ product = null, onCancel, onCreated, 
           </div>
         </section>
 
-        <section className="admin-form-section admin-form-section-full">
-          <div className="admin-form-section-heading">
-            <span>04</span>
-            <div>
-              <h4>Concentrations & Pricing</h4>
-              <p>Set selling price and optional cut-off pricing (e.g. was PKR 5,500, now with 15% discount)</p>
+        {fields.gender === "Bundles" ? (
+          <section className="admin-form-section admin-form-section-full admin-bundle-pricing-section">
+            <div className="admin-form-section-heading">
+              <span>04</span>
+              <div>
+                <h4>Bundle Bottles Concentrations & Pricing</h4>
+                <p>
+                  Set separate concentrations and pricing for both bottles in this bundle.
+                  Customers can independently choose their preferred concentration for each bottle (e.g. Nyra 40% with Arven 20%).
+                </p>
+              </div>
             </div>
-          </div>
-          <div className="admin-variant-editor">
-            <div className="admin-variant-labels">
-              <span>Concentration</span>
-              <span>Original / Cut-off (Was)</span>
-              <span>Quick Discount</span>
-              <span>Selling Price (Now)</span>
-              <span />
-            </div>
-            {variants.map((variant, index) => {
-              const comp = Number(variant.compareAtPrice || 0);
-              const pr = Number(variant.price || 0);
-              const hasDiscount = comp > 0 && pr > 0 && comp > pr;
-              const discountPercent = hasDiscount ? Math.round(((comp - pr) / comp) * 100) : 0;
-              const savingsAmount = hasDiscount ? comp - pr : 0;
 
-              return (
-                <div className="admin-variant-card" key={variant.key}>
-                  <div className="admin-variant-row">
-                    <label className="admin-variant-field admin-variant-concentration">
-                      <span className="sr-only">Concentration {index + 1}</span>
-                      <input
-                        type="number"
-                        min="1"
-                        max="100"
-                        placeholder="20"
-                        value={variant.concentrationPercent}
-                        onChange={(event) => updateVariant(variant.key, "concentrationPercent", event.target.value)}
-                        required
-                      />
-                      <small>%</small>
-                    </label>
-
-                    <label className="admin-variant-field admin-variant-cutoff">
-                      <span className="sr-only">Original / Cut-off Price (PKR) {index + 1}</span>
-                      <small>WAS PKR</small>
-                      <input
-                        type="number"
-                        min="0"
-                        step="1"
-                        placeholder="e.g. 5500"
-                        value={variant.compareAtPrice || ""}
-                        onChange={(event) => handleCompareAtChange(variant.key, event.target.value)}
-                      />
-                    </label>
-
-                    <div className="admin-variant-presets-cell">
-                      <div className="admin-variant-presets">
-                        {[10, 15, 20, 25].map((pct) => (
-                          <button
-                            key={pct}
-                            type="button"
-                            className={`admin-preset-tag ${discountPercent === pct ? "is-active" : ""}`}
-                            onClick={() => applyDiscountPreset(variant.key, pct)}
-                            title={`Set ${pct}% discount`}
-                          >
-                            {pct}%
-                          </button>
-                        ))}
-                        {hasDiscount && (
+            <div className="admin-bundle-bottle-cards-container">
+              {bundleBottles.map((bottle, bottleIdx) => {
+                const bottleName = bottle.name || `Bottle ${bottleIdx + 1}`;
+                return (
+                  <div key={bottleIdx} className="admin-bundle-bottle-editor-card">
+                    <div className="admin-bundle-bottle-card-top">
+                      <div className="admin-bundle-bottle-badge-row">
+                        <span className="admin-bundle-bottle-idx-pill">BOTTLE {bottleIdx + 1}</span>
+                        <h5>{bottleName}</h5>
+                        <small>({bottle.volumeMl || fields.volumeMl || 50} ml each)</small>
+                        {bundleBottles.length > 2 && (
                           <button
                             type="button"
-                            className="admin-preset-clear"
-                            onClick={() => clearCutoff(variant.key)}
-                            title="Clear discount cut-off"
+                            style={{ marginLeft: "auto", padding: "4px 10px", background: "none", border: "1px solid #c0392b", color: "#c0392b", cursor: "pointer", fontSize: "11px" }}
+                            onClick={() => removeBundleBottle(bottleIdx)}
                           >
-                            ✕
+                            Remove Bottle
                           </button>
                         )}
                       </div>
+
+                      <div className="admin-bundle-bottle-inputs-row">
+                        <label className="admin-field" style={{ margin: 0 }}>
+                          <span>Fragrance Name</span>
+                          <input
+                            value={bottle.name}
+                            onChange={(e) => updateBottleField(bottleIdx, "name", e.target.value)}
+                            placeholder="e.g. Nyra"
+                            required
+                          />
+                        </label>
+                        <label className="admin-field" style={{ margin: 0 }}>
+                          <span>Scent Notes / Tagline</span>
+                          <input
+                            value={bottle.tagline}
+                            onChange={(e) => updateBottleField(bottleIdx, "tagline", e.target.value)}
+                            placeholder="e.g. Luminous white florals, roasted coffee & vanilla"
+                          />
+                        </label>
+                      </div>
                     </div>
 
-                    <label className="admin-variant-field admin-variant-price">
-                      <span className="sr-only">Selling Price {index + 1}</span>
-                      <small>NOW PKR</small>
-                      <input
-                        type="number"
-                        min="1"
-                        step="1"
-                        placeholder="3500"
-                        value={variant.price}
-                        onChange={(event) => handlePriceChange(variant.key, event.target.value)}
-                        required
-                      />
-                    </label>
+                    <div className="admin-variant-editor">
+                      <div className="admin-variant-labels">
+                        <span>Concentration</span>
+                        <span>Original / Cut-off (Was)</span>
+                        <span>Quick Discount</span>
+                        <span>Bottle Price (Now)</span>
+                        <span />
+                      </div>
 
-                    <button
-                      className="admin-variant-remove"
-                      type="button"
-                      onClick={() => removeVariant(variant.key)}
-                      disabled={variants.length === 1}
-                      aria-label={`Remove concentration ${index + 1}`}
-                      title="Remove variant"
-                    >
-                      ×
-                    </button>
+                      {bottle.concentrations.map((concItem, concIdx) => {
+                        const comp = Number(concItem.compareAtPrice || 0);
+                        const pr = Number(concItem.price || 0);
+                        const hasDiscount = comp > 0 && pr > 0 && comp > pr;
+                        const discountPercent = hasDiscount ? Math.round(((comp - pr) / comp) * 100) : 0;
+                        const savingsAmount = hasDiscount ? comp - pr : 0;
+
+                        return (
+                          <div className="admin-variant-card" key={concItem.key || concIdx}>
+                            <div className="admin-variant-row">
+                              <label className="admin-variant-field admin-variant-concentration">
+                                <span className="sr-only">Concentration</span>
+                                <input
+                                  type="number"
+                                  min="1"
+                                  max="100"
+                                  placeholder="20"
+                                  value={concItem.concentrationPercent}
+                                  onChange={(e) => updateBottleConc(bottleIdx, concItem.key, "concentrationPercent", e.target.value)}
+                                  required
+                                />
+                                <small>%</small>
+                              </label>
+
+                              <label className="admin-variant-field admin-variant-cutoff">
+                                <span className="sr-only">Original / Cut-off Price</span>
+                                <small>WAS PKR</small>
+                                <input
+                                  type="number"
+                                  min="0"
+                                  step="1"
+                                  placeholder="e.g. 4000"
+                                  value={concItem.compareAtPrice || ""}
+                                  onChange={(e) => updateBottleConc(bottleIdx, concItem.key, "compareAtPrice", e.target.value)}
+                                />
+                              </label>
+
+                              <div className="admin-variant-presets-cell">
+                                <div className="admin-variant-presets">
+                                  {[10, 15, 20, 25].map((pct) => (
+                                    <button
+                                      key={pct}
+                                      type="button"
+                                      className={`admin-preset-tag ${discountPercent === pct ? "is-active" : ""}`}
+                                      onClick={() => applyBottleDiscountPreset(bottleIdx, concItem.key, pct)}
+                                      title={`Set ${pct}% discount`}
+                                    >
+                                      {pct}%
+                                    </button>
+                                  ))}
+                                  {hasDiscount && (
+                                    <button
+                                      type="button"
+                                      className="admin-preset-clear"
+                                      onClick={() => updateBottleConc(bottleIdx, concItem.key, "compareAtPrice", "")}
+                                      title="Clear discount cut-off"
+                                    >
+                                      ✕
+                                    </button>
+                                  )}
+                                </div>
+                              </div>
+
+                              <label className="admin-variant-field admin-variant-price">
+                                <span className="sr-only">Bottle Price</span>
+                                <small>NOW PKR</small>
+                                <input
+                                  type="number"
+                                  min="1"
+                                  step="1"
+                                  placeholder="3500"
+                                  value={concItem.price}
+                                  onChange={(e) => updateBottleConc(bottleIdx, concItem.key, "price", e.target.value)}
+                                  required
+                                />
+                              </label>
+
+                              <button
+                                className="admin-variant-remove"
+                                type="button"
+                                onClick={() => removeBottleConc(bottleIdx, concItem.key)}
+                                disabled={bottle.concentrations.length === 1}
+                                aria-label="Remove concentration"
+                                title="Remove concentration"
+                              >
+                                ×
+                              </button>
+                            </div>
+
+                            {hasDiscount && (
+                              <div className="admin-variant-discount-banner">
+                                <span className="admin-variant-discount-badge">{discountPercent}% OFF</span>
+                                <span className="admin-variant-discount-text">
+                                  Cut-off active: Was <s>PKR {comp.toLocaleString()}</s> → Now <strong>PKR {pr.toLocaleString()}</strong> (Customer saves PKR {savingsAmount.toLocaleString()})
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+
+                      <button
+                        className="admin-add-variant"
+                        type="button"
+                        onClick={() => addBottleConc(bottleIdx)}
+                        style={{ marginTop: "12px" }}
+                      >
+                        ＋ ADD ANOTHER CONCENTRATION FOR {bottleName.toUpperCase()}
+                      </button>
+                    </div>
                   </div>
+                );
+              })}
 
-                  {hasDiscount && (
-                    <div className="admin-variant-discount-banner">
-                      <span className="admin-variant-discount-badge">{discountPercent}% OFF</span>
-                      <span className="admin-variant-discount-text">
-                        Cut-off active: Was <s>PKR {comp.toLocaleString()}</s> → Now <strong>PKR {pr.toLocaleString()}</strong> (Customer saves PKR {savingsAmount.toLocaleString()})
-                      </span>
-                    </div>
-                  )}
+              <button
+                type="button"
+                style={{ padding: "8px 16px", background: "none", border: "1px dashed rgba(57, 70, 63, 0.4)", color: "var(--ink)", cursor: "pointer", fontSize: "11px", letterSpacing: "0.08em", alignSelf: "flex-start" }}
+                onClick={addBundleBottle}
+              >
+                ＋ Add Another Bottle to Bundle
+              </button>
+            </div>
+
+            {/* Bundle Discount and Live Simulator */}
+            <div className="admin-bundle-combo-simulator-box">
+              <div className="admin-bundle-simulator-header">
+                <div>
+                  <h5>Bundle Set Special Discount & Live Simulator</h5>
+                  <p>
+                    Set the special discount when bought together as a bundle, and preview any combination (e.g. Nyra 40% + Arven 20%).
+                  </p>
                 </div>
-              );
-            })}
-            <button className="admin-add-variant" type="button" onClick={addVariant} disabled={variants.length >= 10}>
-              ＋ ADD ANOTHER CONCENTRATION
-            </button>
-          </div>
-        </section>
+                <label className="admin-bundle-discount-input-label">
+                  <span>Bundle Set Discount</span>
+                  <div className="admin-bundle-discount-input-wrap">
+                    <input
+                      type="number"
+                      min="0"
+                      max="90"
+                      value={bundleDiscountPercent}
+                      onChange={(e) => setBundleDiscountPercent(Math.max(0, Math.min(90, Number(e.target.value) || 0)))}
+                    />
+                    <small>% OFF</small>
+                  </div>
+                </label>
+              </div>
+
+              {/* Live combination preview */}
+              <div className="admin-bundle-live-tester">
+                <span className="admin-bundle-tester-title">REAL-TIME COMBINATION SIMULATOR:</span>
+                <div className="admin-bundle-tester-selectors">
+                  {bundleBottles.map((bottle, bIdx) => (
+                    <div key={bIdx} className="admin-bundle-tester-selector-col">
+                      <label>{bottle.name || `Bottle ${bIdx + 1}`} Selection:</label>
+                      <select
+                        value={simulatedSelections[bIdx] || bottle.concentrations[0]?.concentrationPercent || 20}
+                        onChange={(e) => {
+                          const next = [...simulatedSelections];
+                          next[bIdx] = Number(e.target.value);
+                          setSimulatedSelections(next);
+                        }}
+                      >
+                        {bottle.concentrations.map((c) => (
+                          <option key={c.concentrationPercent} value={c.concentrationPercent}>
+                            {c.concentrationPercent}% — PKR {Number(c.price || 0).toLocaleString()}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Calculation results */}
+                <div className="admin-bundle-calc-results-pill">
+                  <div className="admin-bundle-calc-names">
+                    <strong>
+                      {bundleBottles.map((b, i) => `${b.name || `Bottle ${i + 1}`} (${simulatedSelections[i] || b.concentrations[0]?.concentrationPercent || 20}%)`).join(" + ")}
+                    </strong>
+                    <span>Combined individual bottles: PKR {simTotalStandard.toLocaleString()}</span>
+                  </div>
+                  <div className="admin-bundle-calc-price">
+                    {bundleDiscountPercent > 0 && <s>PKR {simTotalStandard.toLocaleString()}</s>}
+                    <strong>PKR {simTotalDiscounted.toLocaleString()}</strong>
+                    {bundleDiscountPercent > 0 && <span className="admin-badge-discount">{bundleDiscountPercent}% BUNDLE SAVING</span>}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+        ) : (
+          <section className="admin-form-section admin-form-section-full">
+            <div className="admin-form-section-heading">
+              <span>04</span>
+              <div>
+                <h4>Concentrations & Pricing</h4>
+                <p>Set selling price and optional cut-off pricing (e.g. was PKR 5,500, now with 15% discount)</p>
+              </div>
+            </div>
+            <div className="admin-variant-editor">
+              <div className="admin-variant-labels">
+                <span>Concentration</span>
+                <span>Original / Cut-off (Was)</span>
+                <span>Quick Discount</span>
+                <span>Selling Price (Now)</span>
+                <span />
+              </div>
+              {variants.map((variant, index) => {
+                const comp = Number(variant.compareAtPrice || 0);
+                const pr = Number(variant.price || 0);
+                const hasDiscount = comp > 0 && pr > 0 && comp > pr;
+                const discountPercent = hasDiscount ? Math.round(((comp - pr) / comp) * 100) : 0;
+                const savingsAmount = hasDiscount ? comp - pr : 0;
+
+                return (
+                  <div className="admin-variant-card" key={variant.key}>
+                    <div className="admin-variant-row">
+                      <label className="admin-variant-field admin-variant-concentration">
+                        <span className="sr-only">Concentration {index + 1}</span>
+                        <input
+                          type="number"
+                          min="1"
+                          max="100"
+                          placeholder="20"
+                          value={variant.concentrationPercent}
+                          onChange={(event) => updateVariant(variant.key, "concentrationPercent", event.target.value)}
+                          required
+                        />
+                        <small>%</small>
+                      </label>
+
+                      <label className="admin-variant-field admin-variant-cutoff">
+                        <span className="sr-only">Original / Cut-off Price (PKR) {index + 1}</span>
+                        <small>WAS PKR</small>
+                        <input
+                          type="number"
+                          min="0"
+                          step="1"
+                          placeholder="e.g. 5500"
+                          value={variant.compareAtPrice || ""}
+                          onChange={(event) => handleCompareAtChange(variant.key, event.target.value)}
+                        />
+                      </label>
+
+                      <div className="admin-variant-presets-cell">
+                        <div className="admin-variant-presets">
+                          {[10, 15, 20, 25].map((pct) => (
+                            <button
+                              key={pct}
+                              type="button"
+                              className={`admin-preset-tag ${discountPercent === pct ? "is-active" : ""}`}
+                              onClick={() => applyDiscountPreset(variant.key, pct)}
+                              title={`Set ${pct}% discount`}
+                            >
+                              {pct}%
+                            </button>
+                          ))}
+                          {hasDiscount && (
+                            <button
+                              type="button"
+                              className="admin-preset-clear"
+                              onClick={() => clearCutoff(variant.key)}
+                              title="Clear discount cut-off"
+                            >
+                              ✕
+                            </button>
+                          )}
+                        </div>
+                      </div>
+
+                      <label className="admin-variant-field admin-variant-price">
+                        <span className="sr-only">Selling Price {index + 1}</span>
+                        <small>NOW PKR</small>
+                        <input
+                          type="number"
+                          min="1"
+                          step="1"
+                          placeholder="3500"
+                          value={variant.price}
+                          onChange={(event) => handlePriceChange(variant.key, event.target.value)}
+                          required
+                        />
+                      </label>
+
+                      <button
+                        className="admin-variant-remove"
+                        type="button"
+                        onClick={() => removeVariant(variant.key)}
+                        disabled={variants.length === 1}
+                        aria-label={`Remove concentration ${index + 1}`}
+                        title="Remove variant"
+                      >
+                        ×
+                      </button>
+                    </div>
+
+                    {hasDiscount && (
+                      <div className="admin-variant-discount-banner">
+                        <span className="admin-variant-discount-badge">{discountPercent}% OFF</span>
+                        <span className="admin-variant-discount-text">
+                          Cut-off active: Was <s>PKR {comp.toLocaleString()}</s> → Now <strong>PKR {pr.toLocaleString()}</strong> (Customer saves PKR {savingsAmount.toLocaleString()})
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+              <button className="admin-add-variant" type="button" onClick={addVariant} disabled={variants.length >= 10}>
+                ＋ ADD ANOTHER CONCENTRATION
+              </button>
+            </div>
+          </section>
+        )}
       </div>
 
       <div className="admin-product-form-actions">

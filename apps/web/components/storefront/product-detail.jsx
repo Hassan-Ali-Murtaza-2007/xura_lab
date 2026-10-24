@@ -150,21 +150,62 @@ export default function ProductDetail({ product }) {
   }, [product]);
 
   const [selectedBottleConcentrations, setSelectedBottleConcentrations] = useState(() =>
-    bundleBottles.map((b) => b.defaultConcentration || b.concentrations?.[0] || 20)
+    bundleBottles.map((b) => {
+      if (b.defaultConcentration) return Number(b.defaultConcentration);
+      const first = b.concentrations?.[0];
+      if (typeof first === "object" && first !== null) return Number(first.concentrationPercent || 20);
+      return Number(first || 20);
+    })
   );
 
   useEffect(() => {
     if (bundleBottles.length) {
-      setSelectedBottleConcentrations(bundleBottles.map((b) => b.defaultConcentration || b.concentrations?.[0] || 20));
+      setSelectedBottleConcentrations(
+        bundleBottles.map((b) => {
+          if (b.defaultConcentration) return Number(b.defaultConcentration);
+          const first = b.concentrations?.[0];
+          if (typeof first === "object" && first !== null) return Number(first.concentrationPercent || 20);
+          return Number(first || 20);
+        })
+      );
     }
   }, [bundleBottles]);
 
   function getPriceForConcentration(bottleName, conc) {
-    if (conc === 10) return 2500;
-    if (conc === 20) return 3500;
-    if (conc === 25) return 4500;
-    if (conc === 40) return 5500;
-    return 2500 + Math.round((conc / 10) * 1000);
+    const bottle = bundleBottles.find((b) => b.name === bottleName);
+    if (bottle && Array.isArray(bottle.concentrations)) {
+      const match = bottle.concentrations.find((c) =>
+        typeof c === "object" ? Number(c.concentrationPercent) === Number(conc) : Number(c) === Number(conc)
+      );
+      if (match && typeof match === "object" && match.price) {
+        return Number(match.price);
+      }
+      if (bottle.prices && bottle.prices[conc]) {
+        return Number(bottle.prices[conc]);
+      }
+    }
+    const c = Number(conc);
+    if (c === 10) return 2500;
+    if (c === 20) return 3500;
+    if (c === 25) return 4500;
+    if (c === 40) return 5500;
+    return 2500 + Math.round((c / 10) * 1000);
+  }
+
+  function getCompareAtPriceForConcentration(bottleName, conc) {
+    const bottle = bundleBottles.find((b) => b.name === bottleName);
+    if (bottle && Array.isArray(bottle.concentrations)) {
+      const match = bottle.concentrations.find((c) =>
+        typeof c === "object" ? Number(c.concentrationPercent) === Number(conc) : Number(c) === Number(conc)
+      );
+      if (match && typeof match === "object" && match.compareAtPrice) {
+        return Number(match.compareAtPrice);
+      }
+      if (bottle.compareAtPrices && bottle.compareAtPrices[conc]) {
+        return Number(bottle.compareAtPrices[conc]);
+      }
+    }
+    return 0;
   }
 
   const { bundlePrice, bundleCompareAtPrice, bundleSavingsPct, bundleSavingsAmount } = useMemo(() => {
@@ -175,18 +216,25 @@ export default function ProductDetail({ product }) {
       const conc = selectedBottleConcentrations[idx] || 20;
       return sum + getPriceForConcentration(bottle.name, conc);
     }, 0);
+    const compareAtSum = bundleBottles.reduce((sum, bottle, idx) => {
+      const conc = selectedBottleConcentrations[idx] || 20;
+      const comp = getCompareAtPriceForConcentration(bottle.name, conc);
+      return sum + (comp > 0 ? comp : getPriceForConcentration(bottle.name, conc));
+    }, 0);
 
-    const discounted = Math.round(regularSum * 0.9);
-    const savings = regularSum - discounted;
-    const pct = Math.round((savings / regularSum) * 100);
+    const discountRate = (100 - (Number(product.bundleDiscountPercent) || 10)) / 100;
+    const discounted = Math.round(regularSum * discountRate);
+    const effectiveCompareAt = compareAtSum > discounted ? compareAtSum : regularSum;
+    const savings = effectiveCompareAt - discounted;
+    const pct = Math.round((savings / effectiveCompareAt) * 100);
 
     return {
       bundlePrice: discounted,
-      bundleCompareAtPrice: regularSum,
+      bundleCompareAtPrice: effectiveCompareAt,
       bundleSavingsPct: pct,
       bundleSavingsAmount: savings
     };
-  }, [isBundle, bundleBottles, selectedBottleConcentrations]);
+  }, [isBundle, bundleBottles, selectedBottleConcentrations, product.bundleDiscountPercent]);
 
   const cartCount = cart.reduce((total, item) => total + item.quantity, 0);
   const cartTotal = cart.reduce((total, item) => total + Number(item.price) * item.quantity, 0);
@@ -407,12 +455,13 @@ export default function ProductDetail({ product }) {
                           </div>
 
                           <div className="bundle-conc-grid">
-                            {(bottle.concentrations || [10, 20, 40]).map((conc) => {
+                            {(bottle.concentrations || [10, 20, 40]).map((concItem, itemIdx) => {
+                              const conc = typeof concItem === "object" ? Number(concItem.concentrationPercent) : Number(concItem);
                               const isSelected = selectedConc === conc;
                               const concPrice = getPriceForConcentration(bottle.name, conc);
                               return (
                                 <button
-                                  key={conc}
+                                  key={concItem.key || `${bottle.name}-${conc}-${itemIdx}`}
                                   type="button"
                                   className={`bundle-conc-pill ${isSelected ? "is-selected" : ""}`}
                                   onClick={() => {
