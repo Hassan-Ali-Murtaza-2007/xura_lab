@@ -10,7 +10,7 @@ import { productCatalog, withCurrentProductImages } from "@/data/products";
 const number = new Intl.NumberFormat("en-PK", { maximumFractionDigits: 0 });
 const money = (value) => `PKR ${number.format(Number(value))}`;
 const itemKey = (item) => item.cartKey || `${item.id}:${item.variantId || "base"}`;
-const categories = ["Men", "Women", "Unisex"];
+const categories = ["Men", "Women", "Unisex", "Testers", "Bundles"];
 
 function SearchIcon() {
   return (
@@ -114,6 +114,7 @@ export default function CollectionPage() {
       volumeMl: product.volumeMl,
       concentration: selectedVariant.concentrationPercent,
       price: selectedVariant.price,
+      compareAtPrice: selectedVariant.compareAtPrice || null,
       imageUrl: product.imageUrl,
       quantity: 1
     };
@@ -160,6 +161,8 @@ export default function CollectionPage() {
           <button type="button" onClick={() => goToCategory("Men")}>Men</button>
           <button type="button" onClick={() => goToCategory("Unisex")}>Unisex</button>
           <button type="button" onClick={() => goToCategory("Women")}>Women</button>
+          <button type="button" onClick={() => goToCategory("Testers")}>Testers</button>
+          <button type="button" onClick={() => goToCategory("Bundles")}>Bundles</button>
           <Link href="/about">About us</Link>
           <Link href="/contact">Contact us</Link>
         </nav>
@@ -235,6 +238,8 @@ export default function CollectionPage() {
             <button type="button" onClick={() => goToCategory("Men")}>Men</button>
             <button type="button" onClick={() => goToCategory("Unisex")}>Unisex</button>
             <button type="button" onClick={() => goToCategory("Women")}>Women</button>
+            <button type="button" onClick={() => goToCategory("Testers")}>Testers</button>
+            <button type="button" onClick={() => goToCategory("Bundles")}>Bundles</button>
           </div>
           <div className="footer-column footer-policies">
             <h3>Client Care</h3>
@@ -280,6 +285,8 @@ export default function CollectionPage() {
           <button type="button" onClick={() => goToCategory("Men")}>Men</button>
           <button type="button" onClick={() => goToCategory("Unisex")}>Unisex</button>
           <button type="button" onClick={() => goToCategory("Women")}>Women</button>
+          <button type="button" onClick={() => goToCategory("Testers")}>Testers</button>
+          <button type="button" onClick={() => goToCategory("Bundles")}>Bundles</button>
           <Link href="/about">About us</Link>
           <Link href="/contact">Contact us</Link>
         </nav>

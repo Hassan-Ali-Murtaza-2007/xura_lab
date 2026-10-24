@@ -16,9 +16,9 @@ const defaultFields = {
 };
 
 const defaultVariants = () => [
-  { key: "variant-1", concentrationPercent: "10", price: "2500" },
-  { key: "variant-2", concentrationPercent: "20", price: "3500" },
-  { key: "variant-3", concentrationPercent: "40", price: "5500" }
+  { key: "variant-1", concentrationPercent: "10", price: "2500", compareAtPrice: "" },
+  { key: "variant-2", concentrationPercent: "20", price: "3500", compareAtPrice: "" },
+  { key: "variant-3", concentrationPercent: "40", price: "5500", compareAtPrice: "" }
 ];
 
 function fieldsForProduct(product) {
@@ -41,7 +41,8 @@ function variantsForProduct(product) {
   return product.variants.map((variant, index) => ({
     key: `variant-${variant.id || index + 1}`,
     concentrationPercent: String(variant.concentrationPercent),
-    price: String(variant.price)
+    price: String(variant.price),
+    compareAtPrice: variant.compareAtPrice ? String(variant.compareAtPrice) : ""
   }));
 }
 
@@ -75,6 +76,42 @@ export default function AdminProductForm({ product = null, onCancel, onCreated, 
     )));
   }
 
+  function handleCompareAtChange(key, value) {
+    setVariants((current) => current.map((v) => (
+      v.key === key ? { ...v, compareAtPrice: value } : v
+    )));
+  }
+
+  function handlePriceChange(key, value) {
+    setVariants((current) => current.map((v) => (
+      v.key === key ? { ...v, price: value } : v
+    )));
+  }
+
+  function applyDiscountPreset(key, percent) {
+    setVariants((current) => current.map((v) => {
+      if (v.key !== key) return v;
+      let original = Number(v.compareAtPrice);
+      if (!original || original <= 0) {
+        original = Number(v.price) || 0;
+      }
+      if (!original || original <= 0) return v;
+      const discountAmount = Math.round((original * percent) / 100);
+      const salePrice = Math.max(1, original - discountAmount);
+      return {
+        ...v,
+        compareAtPrice: String(original),
+        price: String(salePrice)
+      };
+    }));
+  }
+
+  function clearCutoff(key) {
+    setVariants((current) => current.map((v) => (
+      v.key === key ? { ...v, compareAtPrice: "" } : v
+    )));
+  }
+
   function removeVariant(key) {
     setVariants((current) => current.length === 1 ? current : current.filter((variant) => variant.key !== key));
   }
@@ -82,7 +119,7 @@ export default function AdminProductForm({ product = null, onCancel, onCreated, 
   function addVariant() {
     setVariants((current) => [
       ...current,
-      { key: `variant-${Date.now()}`, concentrationPercent: "", price: "" }
+      { key: `variant-${Date.now()}`, concentrationPercent: "", price: "", compareAtPrice: "" }
     ]);
   }
 
@@ -157,7 +194,16 @@ export default function AdminProductForm({ product = null, onCancel, onCreated, 
     setStatus("");
     const body = new FormData();
     Object.entries(fields).forEach(([key, value]) => body.append(key, value));
-    body.append("variants", JSON.stringify(variants.map(({ concentrationPercent, price }) => ({ concentrationPercent, price }))));
+    body.append(
+      "variants",
+      JSON.stringify(
+        variants.map(({ concentrationPercent, price, compareAtPrice }) => ({
+          concentrationPercent,
+          price,
+          compareAtPrice: compareAtPrice && Number(compareAtPrice) > Number(price) ? compareAtPrice : null
+        }))
+      )
+    );
     body.append("primaryImageIndex", String(primaryImageIndex));
     body.append("retainedImages", JSON.stringify(existingImageUrls));
     images.forEach((image) => body.append("images", image));
@@ -198,7 +244,16 @@ export default function AdminProductForm({ product = null, onCancel, onCreated, 
           <div className="admin-field-grid">
             <label className="admin-field admin-field-wide"><span>Product name</span><input name="name" value={fields.name} onChange={updateField} placeholder="e.g. Solenne" required maxLength={120} /></label>
             <label className="admin-field admin-field-wide"><span>Tagline</span><input name="tagline" value={fields.tagline} onChange={updateField} placeholder="A short customer-facing line" required maxLength={255} /></label>
-            <label className="admin-field"><span>Category</span><select name="gender" value={fields.gender} onChange={updateField}><option>Men</option><option>Women</option><option>Unisex</option></select></label>
+            <label className="admin-field">
+              <span>Category</span>
+              <select name="gender" value={fields.gender} onChange={updateField}>
+                <option>Men</option>
+                <option>Women</option>
+                <option>Unisex</option>
+                <option>Testers</option>
+                <option>Bundles</option>
+              </select>
+            </label>
             <label className="admin-field"><span>Bottle size (ml)</span><input name="volumeMl" type="number" min="1" max="1000" value={fields.volumeMl} onChange={updateField} required /></label>
           </div>
         </section>
@@ -278,17 +333,124 @@ export default function AdminProductForm({ product = null, onCancel, onCreated, 
         </section>
 
         <section className="admin-form-section admin-form-section-full">
-          <div className="admin-form-section-heading"><span>04</span><div><h4>Concentrations & pricing</h4><p>Each option becomes a customer-selectable variant</p></div></div>
+          <div className="admin-form-section-heading">
+            <span>04</span>
+            <div>
+              <h4>Concentrations & Pricing</h4>
+              <p>Set selling price and optional cut-off pricing (e.g. was PKR 5,500, now with 15% discount)</p>
+            </div>
+          </div>
           <div className="admin-variant-editor">
-            <div className="admin-variant-labels"><span>Concentration</span><span>Price in PKR</span><span /></div>
-            {variants.map((variant, index) => (
-              <div className="admin-variant-row" key={variant.key}>
-                <label><span className="sr-only">Concentration {index + 1}</span><input type="number" min="1" max="100" placeholder="20" value={variant.concentrationPercent} onChange={(event) => updateVariant(variant.key, "concentrationPercent", event.target.value)} required /><small>%</small></label>
-                <label><span className="sr-only">Price {index + 1}</span><small>PKR</small><input type="number" min="1" step="1" placeholder="3500" value={variant.price} onChange={(event) => updateVariant(variant.key, "price", event.target.value)} required /></label>
-                <button type="button" onClick={() => removeVariant(variant.key)} disabled={variants.length === 1} aria-label={`Remove concentration ${index + 1}`}>×</button>
-              </div>
-            ))}
-            <button className="admin-add-variant" type="button" onClick={addVariant} disabled={variants.length >= 10}>＋ ADD ANOTHER CONCENTRATION</button>
+            <div className="admin-variant-labels">
+              <span>Concentration</span>
+              <span>Original / Cut-off (Was)</span>
+              <span>Quick Discount</span>
+              <span>Selling Price (Now)</span>
+              <span />
+            </div>
+            {variants.map((variant, index) => {
+              const comp = Number(variant.compareAtPrice || 0);
+              const pr = Number(variant.price || 0);
+              const hasDiscount = comp > 0 && pr > 0 && comp > pr;
+              const discountPercent = hasDiscount ? Math.round(((comp - pr) / comp) * 100) : 0;
+              const savingsAmount = hasDiscount ? comp - pr : 0;
+
+              return (
+                <div className="admin-variant-card" key={variant.key}>
+                  <div className="admin-variant-row">
+                    <label className="admin-variant-field admin-variant-concentration">
+                      <span className="sr-only">Concentration {index + 1}</span>
+                      <input
+                        type="number"
+                        min="1"
+                        max="100"
+                        placeholder="20"
+                        value={variant.concentrationPercent}
+                        onChange={(event) => updateVariant(variant.key, "concentrationPercent", event.target.value)}
+                        required
+                      />
+                      <small>%</small>
+                    </label>
+
+                    <label className="admin-variant-field admin-variant-cutoff">
+                      <span className="sr-only">Original / Cut-off Price (PKR) {index + 1}</span>
+                      <small>WAS PKR</small>
+                      <input
+                        type="number"
+                        min="0"
+                        step="1"
+                        placeholder="e.g. 5500"
+                        value={variant.compareAtPrice || ""}
+                        onChange={(event) => handleCompareAtChange(variant.key, event.target.value)}
+                      />
+                    </label>
+
+                    <div className="admin-variant-presets-cell">
+                      <div className="admin-variant-presets">
+                        {[10, 15, 20, 25].map((pct) => (
+                          <button
+                            key={pct}
+                            type="button"
+                            className={`admin-preset-tag ${discountPercent === pct ? "is-active" : ""}`}
+                            onClick={() => applyDiscountPreset(variant.key, pct)}
+                            title={`Set ${pct}% discount`}
+                          >
+                            {pct}%
+                          </button>
+                        ))}
+                        {hasDiscount && (
+                          <button
+                            type="button"
+                            className="admin-preset-clear"
+                            onClick={() => clearCutoff(variant.key)}
+                            title="Clear discount cut-off"
+                          >
+                            ✕
+                          </button>
+                        )}
+                      </div>
+                    </div>
+
+                    <label className="admin-variant-field admin-variant-price">
+                      <span className="sr-only">Selling Price {index + 1}</span>
+                      <small>NOW PKR</small>
+                      <input
+                        type="number"
+                        min="1"
+                        step="1"
+                        placeholder="3500"
+                        value={variant.price}
+                        onChange={(event) => handlePriceChange(variant.key, event.target.value)}
+                        required
+                      />
+                    </label>
+
+                    <button
+                      className="admin-variant-remove"
+                      type="button"
+                      onClick={() => removeVariant(variant.key)}
+                      disabled={variants.length === 1}
+                      aria-label={`Remove concentration ${index + 1}`}
+                      title="Remove variant"
+                    >
+                      ×
+                    </button>
+                  </div>
+
+                  {hasDiscount && (
+                    <div className="admin-variant-discount-banner">
+                      <span className="admin-variant-discount-badge">{discountPercent}% OFF</span>
+                      <span className="admin-variant-discount-text">
+                        Cut-off active: Was <s>PKR {comp.toLocaleString()}</s> → Now <strong>PKR {pr.toLocaleString()}</strong> (Customer saves PKR {savingsAmount.toLocaleString()})
+                      </span>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+            <button className="admin-add-variant" type="button" onClick={addVariant} disabled={variants.length >= 10}>
+              ＋ ADD ANOTHER CONCENTRATION
+            </button>
           </div>
         </section>
       </div>

@@ -426,7 +426,7 @@ img {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 42px;
+  gap: clamp(16px, 2vw, 32px);
   font-size: 14px;
 }
 
@@ -605,6 +605,42 @@ img {
   white-space: nowrap;
 }
 
+.product-price-col {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 7px;
+  white-space: nowrap;
+}
+
+.product-cutoff-price {
+  text-decoration: line-through;
+  color: #8c938e;
+  font-size: 13px;
+  font-weight: 400;
+}
+
+.product-current-price {
+  color: #242b27;
+  font-weight: 500;
+}
+
+.product-sale-badge {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: rgba(22, 33, 26, 0.9);
+  color: #f7f6f2;
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  padding: 4px 8px;
+  border-radius: 2px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  z-index: 2;
+  pointer-events: none;
+  backdrop-filter: blur(4px);
+}
+
 .product-detail {
   display: block;
   margin-top: 11px;
@@ -717,17 +753,29 @@ img {
 .footer-brand {
   width: 360px;
   max-width: 100%;
+  border: none;
+  outline: none;
 }
 
 .footer-brand-mark {
   width: 100%;
   aspect-ratio: 1 / 0.79;
   overflow: hidden;
+  border: none;
+  outline: none;
+  box-shadow: none;
+  background: transparent;
 }
 
-.footer-brand img {
+.footer-brand img,
+.footer-brand-mark img {
+  display: block;
   width: 100%;
   height: auto;
+  border: none;
+  outline: none;
+  box-shadow: none;
+  background: transparent;
 }
 
 .footer-brand-tagline {
@@ -1048,6 +1096,19 @@ img {
   white-space: nowrap;
 }
 
+.cart-item-price-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+
+.cart-item-cutoff {
+  text-decoration: line-through;
+  color: #8c938e;
+  font-size: 11px;
+}
+
 .cart-item-side button {
   padding-bottom: 2px;
   border-bottom: 1px solid currentColor;
@@ -1262,6 +1323,60 @@ img {
   color: #5f6863;
   font-size: 13px;
   font-weight: 400;
+}
+
+.variant-pill-badge {
+  display: inline-block;
+  background: #1e4d2b;
+  color: #fff;
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  padding: 1px 5px;
+  border-radius: 2px;
+  margin-top: 1px;
+}
+
+.selected-price-block {
+  margin: 27px 0 29px;
+}
+
+.selected-price-row {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.selected-price-row .selected-price {
+  margin: 0;
+  font-size: 26px;
+  font-weight: 400;
+}
+
+.selected-price-cutoff {
+  text-decoration: line-through;
+  color: #8c938e;
+  font-size: 18px;
+}
+
+.selected-price-badge {
+  background: #1e4d2b;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  padding: 2px 7px;
+  border-radius: 2px;
+  vertical-align: middle;
+}
+
+.selected-price-savings {
+  display: block;
+  color: #1e4d2b;
+  font-size: 12px;
+  font-weight: 600;
+  margin-top: 5px;
 }
 
 .selected-price {
@@ -2736,6 +2851,35 @@ img {
   font-size: 12.5px;
   font-weight: 600;
   letter-spacing: 0.02em;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.quick-picker-cutoff-price {
+  text-decoration: line-through;
+  color: #8c938e;
+  font-size: 11px;
+  font-weight: 400;
+}
+
+.quick-picker-variant-btn:hover .quick-picker-cutoff-price {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.quick-picker-discount-badge {
+  background: #1e4d2b;
+  color: #fff;
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  padding: 1px 4px;
+  border-radius: 2px;
+}
+
+.quick-picker-variant-btn:hover .quick-picker-discount-badge {
+  background: #fff;
+  color: #1e4d2b;
 }
 
 .product-card.is-picker-open .quick-view {

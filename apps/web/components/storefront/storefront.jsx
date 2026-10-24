@@ -53,7 +53,7 @@ export default function Storefront() {
     const params = new URLSearchParams(window.location.search);
     const requestedGender = params.get("gender");
     const requestedSearch = params.get("search");
-    if (["Men", "Women", "Unisex"].includes(requestedGender)) setGender(requestedGender);
+    if (["Men", "Women", "Unisex", "Testers", "Bundles"].includes(requestedGender)) setGender(requestedGender);
     if (requestedSearch) setQuery(requestedSearch);
 
     const stored = window.localStorage.getItem("xura-cart");
@@ -127,6 +127,7 @@ export default function Storefront() {
       volumeMl: product.volumeMl,
       concentration: selectedVariant.concentrationPercent,
       price: selectedVariant.price,
+      compareAtPrice: selectedVariant.compareAtPrice || null,
       imageUrl: product.imageUrl,
       quantity: 1
     };
@@ -187,6 +188,8 @@ export default function Storefront() {
           <button type="button" onClick={() => chooseGender("Men")}>Men</button>
           <button type="button" onClick={() => chooseGender("Unisex")}>Unisex</button>
           <button type="button" onClick={() => chooseGender("Women")}>Women</button>
+          <button type="button" onClick={() => chooseGender("Testers")}>Testers</button>
+          <button type="button" onClick={() => chooseGender("Bundles")}>Bundles</button>
           <Link href="/about">About us</Link>
           <Link href="/contact">Contact us</Link>
         </nav>
@@ -298,6 +301,8 @@ export default function Storefront() {
             <button type="button" onClick={() => chooseGender("Men")}>Men</button>
             <button type="button" onClick={() => chooseGender("Unisex")}>Unisex</button>
             <button type="button" onClick={() => chooseGender("Women")}>Women</button>
+            <button type="button" onClick={() => chooseGender("Testers")}>Testers</button>
+            <button type="button" onClick={() => chooseGender("Bundles")}>Bundles</button>
           </div>
 
           <div className="footer-column footer-policies">
@@ -353,6 +358,8 @@ export default function Storefront() {
           <button type="button" onClick={() => chooseGender("Men")}>Men</button>
           <button type="button" onClick={() => chooseGender("Unisex")}>Unisex</button>
           <button type="button" onClick={() => chooseGender("Women")}>Women</button>
+          <button type="button" onClick={() => chooseGender("Testers")}>Testers</button>
+          <button type="button" onClick={() => chooseGender("Bundles")}>Bundles</button>
           <Link href="/about">About us</Link>
           <Link href="/contact">Contact us</Link>
         </nav>

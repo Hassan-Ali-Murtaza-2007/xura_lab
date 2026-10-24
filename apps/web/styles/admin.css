@@ -493,7 +493,7 @@
 .admin-stat-grid {
   margin-top: 48px;
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 14px;
 }
 
@@ -998,12 +998,22 @@
   border-top: 1px solid rgba(57, 70, 63, 0.18);
 }
 
+.admin-variant-card {
+  border-top: 1px solid rgba(57, 70, 63, 0.12);
+  padding: 8px 0;
+  transition: background 0.15s ease;
+}
+
+.admin-variant-card:first-of-type {
+  border-top: none;
+}
+
 .admin-variant-labels,
 .admin-variant-row {
   display: grid;
-  grid-template-columns: minmax(150px, 0.8fr) minmax(190px, 1.2fr) 38px;
+  grid-template-columns: 110px minmax(130px, 1fr) auto minmax(130px, 1fr) 36px;
   align-items: center;
-  gap: 13px;
+  gap: 12px;
 }
 
 .admin-variant-labels {
@@ -1016,13 +1026,13 @@
 }
 
 .admin-variant-row {
-  padding: 10px 12px;
-  border-top: 1px solid rgba(57, 70, 63, 0.12);
+  padding: 4px 12px;
+  border-top: none;
 }
 
 .admin-variant-row label {
   min-height: 43px;
-  padding: 0 12px;
+  padding: 0 10px;
   border: 1px solid rgba(57, 70, 63, 0.24);
   background: rgba(255, 255, 255, 0.6);
   display: flex;
@@ -1042,8 +1052,102 @@
 
 .admin-variant-row label small {
   color: #737b76;
-  font-size: 9px;
+  font-size: 8.5px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+}
+
+.admin-variant-presets-cell {
+  display: flex;
+  align-items: center;
+}
+
+.admin-variant-presets {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.admin-preset-tag {
+  background: rgba(57, 70, 63, 0.06);
+  border: 1px solid rgba(57, 70, 63, 0.2);
+  border-radius: 2px;
+  padding: 5px 8px;
+  font-size: 10px;
   font-weight: 600;
+  color: #3f4742;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  line-height: 1;
+}
+
+.admin-preset-tag:hover {
+  background: rgba(57, 70, 63, 0.14);
+  border-color: rgba(57, 70, 63, 0.35);
+  color: var(--ink);
+}
+
+.admin-preset-tag.is-active {
+  background: #1e2e25;
+  border-color: #1e2e25;
+  color: #fff;
+}
+
+.admin-preset-clear {
+  background: transparent;
+  border: 1px dashed rgba(185, 28, 28, 0.35);
+  color: #b91c1c;
+  border-radius: 2px;
+  padding: 5px 7px;
+  font-size: 10px;
+  font-weight: bold;
+  cursor: pointer;
+  line-height: 1;
+  transition: all 0.15s ease;
+}
+
+.admin-preset-clear:hover {
+  background: rgba(185, 28, 28, 0.1);
+  border-color: #b91c1c;
+}
+
+.admin-variant-discount-banner {
+  margin: 6px 12px 2px;
+  padding: 6px 10px;
+  background: rgba(30, 77, 43, 0.06);
+  border: 1px solid rgba(30, 77, 43, 0.2);
+  border-radius: 3px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  color: #244b32;
+}
+
+.admin-variant-discount-badge {
+  background: #1e4d2b;
+  color: #fff;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  padding: 2px 6px;
+  border-radius: 2px;
+  text-transform: uppercase;
+  flex-shrink: 0;
+}
+
+.admin-variant-discount-text {
+  font-size: 11px;
+}
+
+.admin-variant-discount-text s {
+  color: #7b817d;
+}
+
+.admin-variant-discount-text strong {
+  color: #1e4d2b;
+  font-weight: 700;
 }
 
 .admin-variant-row > button {
@@ -1745,14 +1849,26 @@
     grid-column: auto;
   }
 
-  .admin-variant-labels,
-  .admin-variant-row {
-    grid-template-columns: minmax(100px, 0.8fr) minmax(130px, 1.2fr) 32px;
-    gap: 7px;
+  .admin-variant-labels {
+    display: none;
   }
 
-  .admin-variant-row,
-  .admin-variant-labels {
+  .admin-variant-row {
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .admin-variant-presets-cell {
+    grid-column: 1 / -1;
+  }
+
+  .admin-variant-row > button {
+    grid-column: 2;
+    justify-self: end;
+  }
+
+  .admin-variant-row {
     padding-inline: 0;
   }
 
@@ -2253,6 +2369,64 @@
   padding: 2px 6px;
   border-radius: 2px;
   color: #444;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.admin-variant-chips span.has-discount-chip {
+  background: rgba(30, 77, 43, 0.08);
+  border: 1px solid rgba(30, 77, 43, 0.2);
+  color: #1a4225;
+}
+
+.admin-chip-cutoff {
+  text-decoration: line-through;
+  opacity: 0.6;
+  font-size: 8.5px;
+}
+
+.admin-chip-discount {
+  background: #1e4d2b;
+  color: #fff;
+  font-size: 7.5px;
+  font-weight: 700;
+  padding: 1px 3px;
+  border-radius: 2px;
+  margin-left: 2px;
+  letter-spacing: 0.04em;
+}
+
+.admin-product-price-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.admin-price-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.admin-price-cutoff {
+  text-decoration: line-through;
+  color: #878c88;
+  font-size: 11px;
+}
+
+.admin-discount-pill {
+  display: inline-block;
+  background: rgba(30, 77, 43, 0.1);
+  color: #1e4d2b;
+  border: 1px solid rgba(30, 77, 43, 0.25);
+  font-size: 8.5px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  padding: 1px 5px;
+  border-radius: 2px;
+  vertical-align: middle;
 }
 
 .admin-image-count-badge {

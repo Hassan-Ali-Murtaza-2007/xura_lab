@@ -104,6 +104,7 @@ export default function ProductDetail({ product }) {
       volumeMl: product.volumeMl,
       concentration: selectedVariant.concentrationPercent,
       price: selectedVariant.price,
+      compareAtPrice: selectedVariant.compareAtPrice || null,
       imageUrl: product.imageUrl,
       quantity
     };
@@ -156,6 +157,8 @@ export default function ProductDetail({ product }) {
           <Link href="/?gender=Men#collection">Men</Link>
           <Link href="/?gender=Unisex#collection">Unisex</Link>
           <Link href="/?gender=Women#collection">Women</Link>
+          <Link href="/?gender=Testers#collection">Testers</Link>
+          <Link href="/?gender=Bundles#collection">Bundles</Link>
           <Link href="/about">About us</Link>
           <Link href="/contact">Contact us</Link>
         </nav>
@@ -186,22 +189,57 @@ export default function ProductDetail({ product }) {
               <fieldset className="variant-picker">
                 <legend>Concentration, {product.volumeMl} ml</legend>
                 <div className="variant-options">
-                  {product.variants.map((variant) => (
-                    <button
-                      className={variant.id === selectedVariant.id ? "is-selected" : ""}
-                      key={variant.id}
-                      type="button"
-                      onClick={() => setSelectedVariant(variant)}
-                      aria-pressed={variant.id === selectedVariant.id}
-                    >
-                      <span>{variant.concentrationPercent}%</span>
-                      <small>{money(variant.price)}</small>
-                    </button>
-                  ))}
+                  {product.variants.map((variant) => {
+                    const vComp = Number(variant.compareAtPrice || 0);
+                    const vPr = Number(variant.price || 0);
+                    const vHasDiscount = vComp > 0 && vPr > 0 && vComp > vPr;
+                    const vPct = vHasDiscount ? Math.round(((vComp - vPr) / vComp) * 100) : 0;
+
+                    return (
+                      <button
+                        className={variant.id === selectedVariant.id ? "is-selected" : ""}
+                        key={variant.id}
+                        type="button"
+                        onClick={() => setSelectedVariant(variant)}
+                        aria-pressed={variant.id === selectedVariant.id}
+                      >
+                        <span>{variant.concentrationPercent}%</span>
+                        <small>{money(variant.price)}</small>
+                        {vHasDiscount && (
+                          <span className="variant-pill-badge">{vPct}% OFF</span>
+                        )}
+                      </button>
+                    );
+                  })}
                 </div>
               </fieldset>
 
-              <p className="selected-price">{money(selectedVariant.price)}</p>
+              {(() => {
+                const comp = Number(selectedVariant.compareAtPrice || 0);
+                const pr = Number(selectedVariant.price || 0);
+                const hasCutoff = comp > 0 && pr > 0 && comp > pr;
+                const pct = hasCutoff ? Math.round(((comp - pr) / comp) * 100) : 0;
+                const savings = hasCutoff ? comp - pr : 0;
+
+                return (
+                  <div className="selected-price-block">
+                    <div className="selected-price-row">
+                      <p className="selected-price">{money(selectedVariant.price)}</p>
+                      {hasCutoff && (
+                        <>
+                          <s className="selected-price-cutoff">{money(comp)}</s>
+                          <span className="selected-price-badge">{pct}% OFF</span>
+                        </>
+                      )}
+                    </div>
+                    {hasCutoff && (
+                      <small className="selected-price-savings">
+                        You save {money(savings)} ({pct}%)
+                      </small>
+                    )}
+                  </div>
+                );
+              })()}
               <div className="product-description">
                 <h2>{product.lead}</h2>
                 <p>{product.description}</p>
@@ -265,6 +303,8 @@ export default function ProductDetail({ product }) {
             <Link href="/?gender=Men#collection">Men</Link>
             <Link href="/?gender=Unisex#collection">Unisex</Link>
             <Link href="/?gender=Women#collection">Women</Link>
+            <Link href="/?gender=Testers#collection">Testers</Link>
+            <Link href="/?gender=Bundles#collection">Bundles</Link>
           </div>
 
           <div className="footer-column footer-policies">
@@ -320,6 +360,8 @@ export default function ProductDetail({ product }) {
           <Link href="/?gender=Men#collection">Men</Link>
           <Link href="/?gender=Unisex#collection">Unisex</Link>
           <Link href="/?gender=Women#collection">Women</Link>
+          <Link href="/?gender=Testers#collection">Testers</Link>
+          <Link href="/?gender=Bundles#collection">Bundles</Link>
           <Link href="/about">About us</Link>
           <Link href="/contact">Contact us</Link>
         </nav>

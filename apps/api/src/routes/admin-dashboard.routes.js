@@ -38,9 +38,10 @@ router.get("/dashboard", requireAdmin, async (request, response) => {
         name: product.name,
         gender: product.gender,
         imageUrl: product.imageUrl,
-        variantCount: product.variants.length,
-        startingPrice: Math.min(...product.variants.map((variant) => variant.price)),
-        isActive: true
+        variantCount: product.variants?.length || 0,
+        startingPrice: Math.min(...(product.variants || []).map((variant) => variant.price)),
+        compareAtPrice: product.compareAtPrice || null,
+        isActive: product.isActive !== false
       }))
     });
   }
@@ -56,11 +57,12 @@ router.get("/dashboard", requireAdmin, async (request, response) => {
                          total, status, created_at AS createdAt
                   FROM orders ORDER BY created_at DESC LIMIT 10`),
       pool.query(`SELECT p.id, p.slug, p.name, p.gender, p.image_url AS imageUrl, p.is_active AS isActive,
-                         COUNT(pv.id) AS variantCount, COALESCE(MIN(pv.price), p.price) AS startingPrice
+                         COUNT(pv.id) AS variantCount, COALESCE(MIN(pv.price), p.price) AS startingPrice,
+                         p.compare_at_price AS compareAtPrice
                   FROM products p
                   LEFT JOIN product_variants pv ON pv.product_id = p.id AND pv.is_active = TRUE
                   WHERE p.is_active = TRUE
-                  GROUP BY p.id, p.slug, p.name, p.gender, p.image_url, p.is_active, p.price
+                  GROUP BY p.id, p.slug, p.name, p.gender, p.image_url, p.is_active, p.price, p.compare_at_price
                   ORDER BY p.sort_order ASC, p.id ASC`),
       pool.query(`SELECT COUNT(*) AS totalPromos,
                          COALESCE(SUM(is_active = TRUE AND (expires_at IS NULL OR expires_at > NOW())), 0) AS activePromos

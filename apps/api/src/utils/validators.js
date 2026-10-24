@@ -13,7 +13,9 @@ export const productSummary = (product) => ({
   imageUrl: product.imageUrl,
   variantCount: product.variants.length,
   startingPrice: product.price,
-  isActive: product.isActive !== false
+  compareAtPrice: product.compareAtPrice || null,
+  isActive: product.isActive !== false,
+  variants: product.variants
 });
 
 export function parseProductInput(body) {
@@ -35,10 +37,16 @@ export function parseProductInput(body) {
     character: String(body.character || "").trim().slice(0, 255),
     bestFor: String(body.bestFor || "").trim().slice(0, 255),
     variants: Array.isArray(rawVariants)
-      ? rawVariants.map((variant) => ({
-          concentrationPercent: Number(variant.concentrationPercent),
-          price: Number(variant.price)
-        }))
+      ? rawVariants.map((variant) => {
+          const price = Number(variant.price);
+          const rawCompare = Number(variant.compareAtPrice);
+          const compareAtPrice = Number.isFinite(rawCompare) && rawCompare > 0 ? rawCompare : null;
+          return {
+            concentrationPercent: Number(variant.concentrationPercent),
+            price,
+            compareAtPrice
+          };
+        })
       : []
   };
 
@@ -54,7 +62,7 @@ export function parseProductInput(body) {
     throw Object.assign(new Error("Complete all product information fields."), { statusCode: 400 });
   }
   if (!allowedProductCategories.has(product.gender)) {
-    throw Object.assign(new Error("Choose Men, Women, or Unisex as the category."), { statusCode: 400 });
+    throw Object.assign(new Error("Choose Men, Women, Unisex, Testers, or Bundles as the category."), { statusCode: 400 });
   }
   if (!Number.isInteger(product.volumeMl) || product.volumeMl < 1 || product.volumeMl > 1000) {
     throw Object.assign(new Error("Bottle size must be between 1 and 1,000 ml."), { statusCode: 400 });
@@ -84,6 +92,8 @@ export function parseProductInput(body) {
   }
   product.variants.sort((left, right) => left.concentrationPercent - right.concentrationPercent);
   product.price = Math.min(...product.variants.map((variant) => variant.price));
+  const startingVariant = product.variants.find((variant) => variant.price === product.price);
+  product.compareAtPrice = startingVariant?.compareAtPrice || null;
   return product;
 }
 

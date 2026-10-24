@@ -1,13 +1,23 @@
 import { readFile } from "node:fs/promises";
 
-const repairFile = new URL("../../../../database/migrations/006_checkout_promotion_repair.sql", import.meta.url);
+const migrationFiles = [
+  new URL("../../../../database/migrations/006_checkout_promotion_repair.sql", import.meta.url),
+  new URL("../../../../database/migrations/007_variant_compare_at_price.sql", import.meta.url),
+  new URL("../../../../database/migrations/008_product_categories_testers_bundles.sql", import.meta.url)
+];
 
 export async function repairCheckoutSchema(connection) {
-  const sql = await readFile(repairFile, "utf8");
-  // This fixed migration has no delimiters or semicolons inside string literals.
-  const statements = sql.replace(/^\s*--.*$/gm, "").split(";").map((statement) => statement.trim()).filter(Boolean);
-  for (const statement of statements) {
-    // PREPARE and session variables must all use the same connection.
-    await connection.query(statement);
+  for (const file of migrationFiles) {
+    const sql = await readFile(file, "utf8");
+    // These fixed migrations have no delimiters or semicolons inside string literals.
+    const statements = sql
+      .replace(/^\s*--.*$/gm, "")
+      .split(";")
+      .map((statement) => statement.trim())
+      .filter(Boolean);
+    for (const statement of statements) {
+      // PREPARE and session variables must all use the same connection.
+      await connection.query(statement);
+    }
   }
 }

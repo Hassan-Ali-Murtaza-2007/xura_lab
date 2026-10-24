@@ -38,7 +38,12 @@ export default function CartDrawer({
                 </div>
               </div>
               <div className="cart-item-side">
-                <span>{money(item.price * item.quantity)}</span>
+                <div className="cart-item-price-stack">
+                  {item.compareAtPrice && Number(item.compareAtPrice) > Number(item.price) && (
+                    <s className="cart-item-cutoff">{money(Number(item.compareAtPrice) * item.quantity)}</s>
+                  )}
+                  <span>{money(item.price * item.quantity)}</span>
+                </div>
                 <button type="button" onClick={() => onUpdateQuantity(itemKey(item), 0)}>Remove</button>
               </div>
             </div>

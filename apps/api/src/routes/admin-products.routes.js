@@ -52,9 +52,9 @@ router.post("/products", requireAdmin, productImageUpload.array("images", 5), as
       const sortOrder = Number(sortRows[0]?.nextSortOrder || 1);
       const [productResult] = await connection.query(
         `INSERT INTO products (
-           slug, name, tagline, gender, volume_ml, price, image_url, sort_order,
+           slug, name, tagline, gender, volume_ml, price, compare_at_price, image_url, sort_order,
            \`lead\`, description, notes, \`character\`, best_for, is_active
-         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE)`,
+         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE)`,
         [
           slug,
           productInput.name,
@@ -62,6 +62,7 @@ router.post("/products", requireAdmin, productImageUpload.array("images", 5), as
           productInput.gender,
           productInput.volumeMl,
           productInput.price,
+          productInput.compareAtPrice || null,
           imageUrls[0],
           sortOrder,
           productInput.lead,
@@ -74,9 +75,9 @@ router.post("/products", requireAdmin, productImageUpload.array("images", 5), as
       const productId = productResult.insertId;
       for (const [index, variant] of productInput.variants.entries()) {
         await connection.query(
-          `INSERT INTO product_variants (product_id, concentration_percent, price, sort_order, is_active)
-           VALUES (?, ?, ?, ?, TRUE)`,
-          [productId, variant.concentrationPercent, variant.price, index + 1]
+          `INSERT INTO product_variants (product_id, concentration_percent, price, compare_at_price, sort_order, is_active)
+           VALUES (?, ?, ?, ?, ?, TRUE)`,
+          [productId, variant.concentrationPercent, variant.price, variant.compareAtPrice || null, index + 1]
         );
       }
       for (const [index, imageUrl] of imageUrls.entries()) {
@@ -127,7 +128,7 @@ router.get("/products", requireAdmin, async (_request, response) => {
   try {
     const [products] = await pool.query(
       `SELECT p.id, p.slug, p.name, p.tagline, p.gender, p.volume_ml AS volumeMl,
-              p.price, p.image_url AS imageUrl, p.lead, p.description, p.notes,
+              p.price, p.compare_at_price AS compareAtPrice, p.image_url AS imageUrl, p.lead, p.description, p.notes,
               p.character, p.best_for AS bestFor, p.sort_order AS sortOrder,
               p.is_active AS isActive, p.created_at AS createdAt
        FROM products p
@@ -136,7 +137,7 @@ router.get("/products", requireAdmin, async (_request, response) => {
 
     const [variants] = await pool.query(
       `SELECT id, product_id AS productId, concentration_percent AS concentrationPercent,
-              price, sort_order AS sortOrder, is_active AS isActive
+              price, compare_at_price AS compareAtPrice, sort_order AS sortOrder, is_active AS isActive
        FROM product_variants
        ORDER BY sort_order ASC, id ASC`
     );
@@ -179,7 +180,7 @@ router.get("/products/:id", requireAdmin, async (request, response) => {
 
   try {
     const [products] = await pool.query(
-      `SELECT id, slug, name, tagline, gender, volume_ml AS volumeMl, price,
+      `SELECT id, slug, name, tagline, gender, volume_ml AS volumeMl, price, compare_at_price AS compareAtPrice,
               image_url AS imageUrl, sort_order AS sortOrder, \`lead\`, description,
               notes, \`character\`, best_for AS bestFor, is_active AS isActive
        FROM products WHERE id = ? AND is_active = TRUE LIMIT 1`,
@@ -188,7 +189,7 @@ router.get("/products/:id", requireAdmin, async (request, response) => {
     if (!products.length) return response.status(404).json({ message: "Product not found." });
     const [variants] = await pool.query(
       `SELECT id, product_id AS productId, concentration_percent AS concentrationPercent,
-              price, sort_order AS sortOrder
+              price, compare_at_price AS compareAtPrice, sort_order AS sortOrder
        FROM product_variants WHERE product_id = ? AND is_active = TRUE
        ORDER BY sort_order ASC, id ASC`,
       [productId]
@@ -287,7 +288,7 @@ router.put("/products/:id", requireAdmin, productImageUpload.array("images", 5),
 
       await connection.query(
         `UPDATE products SET
-           name = ?, tagline = ?, gender = ?, volume_ml = ?, price = ?, image_url = ?,
+           name = ?, tagline = ?, gender = ?, volume_ml = ?, price = ?, compare_at_price = ?, image_url = ?,
            \`lead\` = ?, description = ?, notes = ?, \`character\` = ?, best_for = ?
          WHERE id = ?`,
         [
@@ -296,6 +297,7 @@ router.put("/products/:id", requireAdmin, productImageUpload.array("images", 5),
           productInput.gender,
           productInput.volumeMl,
           productInput.price,
+          productInput.compareAtPrice || null,
           imageUrls[0],
           productInput.lead,
           productInput.description,
@@ -323,15 +325,15 @@ router.put("/products/:id", requireAdmin, productImageUpload.array("images", 5),
         const existingVariant = existingByConcentration.get(variant.concentrationPercent);
         if (existingVariant) {
           await connection.query(
-            `UPDATE product_variants SET price = ?, sort_order = ?, is_active = TRUE WHERE id = ?`,
-            [variant.price, index + 1, existingVariant.id]
+            `UPDATE product_variants SET price = ?, compare_at_price = ?, sort_order = ?, is_active = TRUE WHERE id = ?`,
+            [variant.price, variant.compareAtPrice || null, index + 1, existingVariant.id]
           );
           variants.push({ ...variant, id: existingVariant.id, productId, sortOrder: index + 1 });
         } else {
           const [variantResult] = await connection.query(
-            `INSERT INTO product_variants (product_id, concentration_percent, price, sort_order, is_active)
-             VALUES (?, ?, ?, ?, TRUE)`,
-            [productId, variant.concentrationPercent, variant.price, index + 1]
+            `INSERT INTO product_variants (product_id, concentration_percent, price, compare_at_price, sort_order, is_active)
+             VALUES (?, ?, ?, ?, ?, TRUE)`,
+            [productId, variant.concentrationPercent, variant.price, variant.compareAtPrice || null, index + 1]
           );
           variants.push({ ...variant, id: variantResult.insertId, productId, sortOrder: index + 1 });
         }

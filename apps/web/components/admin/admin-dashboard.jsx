@@ -289,7 +289,14 @@ export default function AdminDashboard() {
                         <span><strong>{product.name}</strong><small>{product.gender}</small></span>
                       </div>
                       <p>{product.variantCount} concentrations</p>
-                      <p>From {money(product.startingPrice)}</p>
+                      <div className="admin-product-price-cell">
+                        <p>
+                          From {money(product.startingPrice)}
+                          {product.compareAtPrice && Number(product.compareAtPrice) > Number(product.startingPrice) && (
+                            <s className="admin-price-cutoff">{money(product.compareAtPrice)}</s>
+                          )}
+                        </p>
+                      </div>
                       <div className="admin-product-row-actions">
                         <span className={`admin-status ${product.isActive ? "admin-status-active" : "admin-status-cancelled"}`}>{product.isActive ? "Active" : "Inactive"}</span>
                         <button type="button" onClick={() => editProduct(product)} disabled={loadingProductId === product.id}>

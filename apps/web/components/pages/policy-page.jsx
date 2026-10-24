@@ -158,6 +158,8 @@ export default function PolicyPageView({ initialSlug = "privacy-policy" }) {
           <Link href="/?gender=Men#collection">Men</Link>
           <Link href="/?gender=Unisex#collection">Unisex</Link>
           <Link href="/?gender=Women#collection">Women</Link>
+          <Link href="/?gender=Testers#collection">Testers</Link>
+          <Link href="/?gender=Bundles#collection">Bundles</Link>
           <Link href="/about">About us</Link>
           <Link href="/contact">Contact us</Link>
           <Link className="is-active" href="/policies" aria-current="page">Policies</Link>
@@ -176,6 +178,8 @@ export default function PolicyPageView({ initialSlug = "privacy-policy" }) {
           <Link href="/?gender=Men#collection" onClick={() => setMobileOpen(false)}>Men</Link>
           <Link href="/?gender=Unisex#collection" onClick={() => setMobileOpen(false)}>Unisex</Link>
           <Link href="/?gender=Women#collection" onClick={() => setMobileOpen(false)}>Women</Link>
+          <Link href="/?gender=Testers#collection" onClick={() => setMobileOpen(false)}>Testers</Link>
+          <Link href="/?gender=Bundles#collection" onClick={() => setMobileOpen(false)}>Bundles</Link>
           <Link href="/about" onClick={() => setMobileOpen(false)}>About us</Link>
           <Link href="/contact" onClick={() => setMobileOpen(false)}>Contact us</Link>
           <Link className="is-active" href="/policies" onClick={() => setMobileOpen(false)}>Policies</Link>
@@ -420,6 +424,8 @@ export default function PolicyPageView({ initialSlug = "privacy-policy" }) {
             <Link href="/?gender=Men#collection">Men</Link>
             <Link href="/?gender=Unisex#collection">Unisex</Link>
             <Link href="/?gender=Women#collection">Women</Link>
+            <Link href="/?gender=Testers#collection">Testers</Link>
+            <Link href="/?gender=Bundles#collection">Bundles</Link>
           </div>
 
           <div className="footer-column footer-policies">

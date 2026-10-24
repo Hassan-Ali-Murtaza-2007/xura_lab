@@ -107,6 +107,8 @@ export default function AboutPage() {
           <Link href="/?gender=Men#collection">Men</Link>
           <Link href="/?gender=Unisex#collection">Unisex</Link>
           <Link href="/?gender=Women#collection">Women</Link>
+          <Link href="/?gender=Testers#collection">Testers</Link>
+          <Link href="/?gender=Bundles#collection">Bundles</Link>
           <Link className="is-active" href="/about" aria-current="page">About us</Link>
           <Link href="/contact">Contact us</Link>
         </nav>
@@ -220,6 +222,8 @@ export default function AboutPage() {
             <Link href="/?gender=Men#collection">Men</Link>
             <Link href="/?gender=Unisex#collection">Unisex</Link>
             <Link href="/?gender=Women#collection">Women</Link>
+            <Link href="/?gender=Testers#collection">Testers</Link>
+            <Link href="/?gender=Bundles#collection">Bundles</Link>
           </div>
 
           <div className="footer-column footer-policies">
@@ -275,6 +279,8 @@ export default function AboutPage() {
           <Link href="/?gender=Men#collection">Men</Link>
           <Link href="/?gender=Unisex#collection">Unisex</Link>
           <Link href="/?gender=Women#collection">Women</Link>
+          <Link href="/?gender=Testers#collection">Testers</Link>
+          <Link href="/?gender=Bundles#collection">Bundles</Link>
           <Link href="/about" aria-current="page">About us</Link>
           <Link href="/contact">Contact us</Link>
         </nav>

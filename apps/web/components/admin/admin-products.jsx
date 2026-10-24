@@ -175,7 +175,7 @@ export default function AdminProducts() {
   const allProducts = data?.products || [];
 
   const countsByCategory = useMemo(() => {
-    const counts = { all: allProducts.length, Men: 0, Women: 0, Unisex: 0 };
+    const counts = { all: allProducts.length, Men: 0, Women: 0, Unisex: 0, Testers: 0, Bundles: 0 };
     for (const p of allProducts) {
       if (counts[p.gender] !== undefined) counts[p.gender]++;
     }
@@ -263,19 +263,29 @@ export default function AdminProducts() {
                   <small>Active & draft perfumes</small>
                 </article>
                 <article className="admin-stat-card">
-                  <div><span>02</span><p>Unisex collection</p></div>
-                  <strong>{number.format(countsByCategory.Unisex)}</strong>
+                  <div><span>02</span><p>Unisex</p></div>
+                  <strong>{number.format(countsByCategory.Unisex || 0)}</strong>
                   <small>Signature shared accords</small>
                 </article>
                 <article className="admin-stat-card">
-                  <div><span>03</span><p>Men collection</p></div>
-                  <strong>{number.format(countsByCategory.Men)}</strong>
+                  <div><span>03</span><p>Men</p></div>
+                  <strong>{number.format(countsByCategory.Men || 0)}</strong>
                   <small>Crisp & woody blends</small>
                 </article>
                 <article className="admin-stat-card">
-                  <div><span>04</span><p>Women collection</p></div>
-                  <strong>{number.format(countsByCategory.Women)}</strong>
+                  <div><span>04</span><p>Women</p></div>
+                  <strong>{number.format(countsByCategory.Women || 0)}</strong>
                   <small>Luminous floral bouquets</small>
+                </article>
+                <article className="admin-stat-card">
+                  <div><span>05</span><p>Testers</p></div>
+                  <strong>{number.format(countsByCategory.Testers || 0)}</strong>
+                  <small>Sample vials & miniatures</small>
+                </article>
+                <article className="admin-stat-card">
+                  <div><span>06</span><p>Bundles</p></div>
+                  <strong>{number.format(countsByCategory.Bundles || 0)}</strong>
+                  <small>Curated packs & gift sets</small>
                 </article>
               </section>
 
@@ -365,7 +375,9 @@ export default function AdminProducts() {
                     { id: "all", label: "All Fragrances" },
                     { id: "Unisex", label: "Unisex" },
                     { id: "Men", label: "Men" },
-                    { id: "Women", label: "Women" }
+                    { id: "Women", label: "Women" },
+                    { id: "Testers", label: "Testers" },
+                    { id: "Bundles", label: "Bundles" }
                   ].map((tab) => (
                     <button
                       key={tab.id}
@@ -401,16 +413,39 @@ export default function AdminProducts() {
                         <div className="admin-product-variants-summary">
                           <p>{product.variantCount || product.variants?.length || 3} concentrations</p>
                           <div className="admin-variant-chips">
-                            {product.variants?.map((v) => (
-                              <span key={v.id || v.concentrationPercent}>
-                                {v.concentrationPercent}%: {money(v.price)}
-                              </span>
-                            ))}
+                            {product.variants?.map((v) => {
+                              const vComp = Number(v.compareAtPrice || 0);
+                              const vPrice = Number(v.price || 0);
+                              const hasDiscount = vComp > 0 && vPrice > 0 && vComp > vPrice;
+                              const pct = hasDiscount ? Math.round(((vComp - vPrice) / vComp) * 100) : 0;
+                              return (
+                                <span
+                                  key={v.id || v.concentrationPercent}
+                                  className={hasDiscount ? "has-discount-chip" : ""}
+                                  title={hasDiscount ? `Cut-off active: Was PKR ${vComp.toLocaleString()} (save ${pct}%)` : undefined}
+                                >
+                                  <strong>{v.concentrationPercent}%:</strong>{" "}
+                                  {hasDiscount && <s className="admin-chip-cutoff">{money(vComp)}</s>}
+                                  {money(vPrice)}
+                                  {hasDiscount && <small className="admin-chip-discount">-{pct}%</small>}
+                                </span>
+                              );
+                            })}
                           </div>
                         </div>
 
-                        <div>
-                          <p>From {money(product.startingPrice || product.price)}</p>
+                        <div className="admin-product-price-cell">
+                          <div className="admin-price-row">
+                            <p>From {money(product.startingPrice || product.price)}</p>
+                            {product.compareAtPrice && Number(product.compareAtPrice) > Number(product.startingPrice || product.price) && (
+                              <>
+                                <s className="admin-price-cutoff">{money(product.compareAtPrice)}</s>
+                                <span className="admin-discount-pill">
+                                  {Math.round(((Number(product.compareAtPrice) - Number(product.startingPrice || product.price)) / Number(product.compareAtPrice)) * 100)}% OFF
+                                </span>
+                              </>
+                            )}
+                          </div>
                           {product.images?.length > 1 && (
                             <small className="admin-image-count-badge">
                               {product.images.length} images

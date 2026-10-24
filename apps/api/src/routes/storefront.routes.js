@@ -36,6 +36,7 @@ router.get("/products", async (_request, response) => {
         gender,
         volume_ml AS volumeMl,
         price,
+        compare_at_price AS compareAtPrice,
         image_url AS imageUrl,
         sort_order AS sortOrder,
         \`lead\`,
@@ -53,6 +54,7 @@ router.get("/products", async (_request, response) => {
         product_id AS productId,
         concentration_percent AS concentrationPercent,
         price,
+        compare_at_price AS compareAtPrice,
         sort_order AS sortOrder
       FROM product_variants
       WHERE is_active = TRUE
@@ -95,7 +97,7 @@ router.get("/products/:slug", async (request, response) => {
 
   try {
     const [products] = await pool.query(
-      `SELECT id, slug, name, tagline, gender, volume_ml AS volumeMl, price, image_url AS imageUrl,
+      `SELECT id, slug, name, tagline, gender, volume_ml AS volumeMl, price, compare_at_price AS compareAtPrice, image_url AS imageUrl,
               sort_order AS sortOrder, \`lead\`, description, notes, \`character\`, best_for AS bestFor
        FROM products WHERE slug = ? AND is_active = TRUE LIMIT 1`,
       [request.params.slug]
@@ -103,7 +105,7 @@ router.get("/products/:slug", async (request, response) => {
     if (!products.length) return response.status(404).json({ message: "Product not found." });
     const product = products[0];
     const [variants] = await pool.query(
-      `SELECT id, product_id AS productId, concentration_percent AS concentrationPercent, price, sort_order AS sortOrder
+      `SELECT id, product_id AS productId, concentration_percent AS concentrationPercent, price, compare_at_price AS compareAtPrice, sort_order AS sortOrder
        FROM product_variants WHERE product_id = ? AND is_active = TRUE ORDER BY sort_order ASC, id ASC`,
       [product.id]
     );
