@@ -242,6 +242,17 @@ export default function CheckoutPage() {
     event.preventDefault();
     setReceiptError("");
 
+    // Capture form values synchronously before any async await calls
+    const formElement = event.currentTarget;
+    const formData = new FormData(formElement);
+    const shippingAddress = formAddress(formData, "shipping");
+    const billingAddress = billingSame ? null : formAddress(formData, "billing");
+    const email = formData.get("email");
+    const phone = formData.get("phone");
+    const marketingConsent = formData.get("marketingConsent") === "on";
+    const shippingMethod = formData.get("shippingMethod");
+    const orderNote = formData.get("orderNote");
+
     if (paymentMode === "advance" && !receiptFile) {
       setReceiptError("Please attach a photo or screenshot of your payment receipt to complete advance payment.");
       const dropzone = document.getElementById("checkout-receipt-section");
@@ -269,22 +280,20 @@ export default function CheckoutPage() {
       }
 
       setStatus("Placing your order…");
-      const formData = new FormData(event.currentTarget);
-      const shippingAddress = formAddress(formData, "shipping");
       const paymentMethod = paymentMode === "advance" ? "bank-transfer" : "cash-on-delivery";
       const payload = {
-        email: formData.get("email"),
-        phone: formData.get("phone"),
-        marketingConsent: formData.get("marketingConsent") === "on",
+        email,
+        phone,
+        marketingConsent,
         shippingAddress,
-        shippingMethod: formData.get("shippingMethod"),
+        shippingMethod,
         paymentMethod,
         paymentReceiptUrl: uploadedReceiptUrl,
         paymentBank: paymentMode === "advance" ? selectedBank : null,
         transactionId: paymentMode === "advance" && transactionId.trim() ? transactionId.trim() : null,
         billingSameAsShipping: billingSame,
-        billingAddress: billingSame ? null : formAddress(formData, "billing"),
-        orderNote: formData.get("orderNote"),
+        billingAddress,
+        orderNote,
         promoCode: appliedPromo?.code || null,
         items: cart.map((item) => ({
           productId: item.id,
