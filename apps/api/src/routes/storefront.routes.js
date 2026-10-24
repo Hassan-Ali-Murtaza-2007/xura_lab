@@ -4,7 +4,8 @@ import { getPool, isDatabaseConfigured } from "../db.js";
 import { getLocalCatalogue } from "../local-product-store.js";
 import { createLocalOrder } from "../local-order-store.js";
 import { getLocalPromoByCode, incrementLocalPromoUsage } from "../services/local-promo-store.js";
-import { productImagesById } from "../services/image.service.js";
+import { productImagesById, saveOrderReceiptImage } from "../services/image.service.js";
+import { orderReceiptUpload } from "../middleware/upload.js";
 import { isCompleteAddress, normalizeAddress, withCurrentImage } from "../utils/validators.js";
 
 const router = Router();
@@ -299,6 +300,24 @@ router.post("/promo-codes/validate", async (request, response) => {
   }
 });
 
+router.post("/orders/receipt", orderReceiptUpload.single("receipt"), async (request, response) => {
+  response.set("Cache-Control", "no-store");
+  try {
+    if (!request.file) {
+      return response.status(400).json({ message: "Please select a payment receipt photo to upload." });
+    }
+    const saved = await saveOrderReceiptImage(request.file);
+    return response.status(201).json({
+      message: "Receipt photo uploaded successfully.",
+      receiptUrl: saved.publicUrl
+    });
+  } catch (error) {
+    return response.status(error.statusCode || 500).json({
+      message: error.message || "Failed to upload receipt photo."
+    });
+  }
+});
+
 router.post("/orders", async (request, response) => {
   const {
     email,
@@ -307,6 +326,10 @@ router.post("/orders", async (request, response) => {
     shippingAddress: rawShippingAddress,
     shippingMethod,
     paymentMethod,
+    paymentReceiptUrl,
+    receiptUrl,
+    paymentBank,
+    transactionId,
     billingSameAsShipping = true,
     billingAddress: rawBillingAddress,
     orderNote,
@@ -315,6 +338,9 @@ router.post("/orders", async (request, response) => {
   } = request.body || {};
   const normalizedEmail = String(email || "").trim().toLowerCase().slice(0, 254);
   const normalizedPhone = String(phone || "").trim().slice(0, 40);
+  const effectiveReceiptUrl = String(paymentReceiptUrl || receiptUrl || "").trim() || null;
+  const effectivePaymentBank = String(paymentBank || "").trim().slice(0, 60) || null;
+  const effectiveTransactionId = String(transactionId || "").trim().slice(0, 100) || null;
   const shippingAddress = normalizeAddress(rawShippingAddress);
   const billingAddress = billingSameAsShipping ? null : normalizeAddress(rawBillingAddress);
 
@@ -424,6 +450,9 @@ router.post("/orders", async (request, response) => {
       postalCode: shippingAddress.postalCode || null,
       shippingMethod,
       paymentMethod,
+      paymentReceiptUrl: effectiveReceiptUrl,
+      paymentBank: effectivePaymentBank,
+      transactionId: effectiveTransactionId,
       billingSameAsShipping: Boolean(billingSameAsShipping),
       billingAddress: billingAddress || null,
       marketingConsent: Boolean(marketingConsent),
@@ -522,9 +551,10 @@ router.post("/orders", async (request, response) => {
       `INSERT INTO orders (
          customer_name, email, phone, delivery_address, first_name, last_name, company,
          country_code, address_line1, address_line2, city, province, postal_code,
-         shipping_method, payment_method, billing_same_as_shipping, billing_address,
+         shipping_method, payment_method, payment_receipt_url, payment_bank, transaction_id,
+         billing_same_as_shipping, billing_address,
          marketing_consent, order_note, promo_code, discount_amount, subtotal, delivery_fee, total, status
-       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending')`,
+       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending')`,
       [
         customerName,
         normalizedEmail,
@@ -541,6 +571,9 @@ router.post("/orders", async (request, response) => {
         shippingAddress.postalCode || null,
         shippingMethod,
         paymentMethod,
+        effectiveReceiptUrl,
+        effectivePaymentBank,
+        effectiveTransactionId,
         Boolean(billingSameAsShipping),
         billingAddress ? JSON.stringify(billingAddress) : null,
         Boolean(marketingConsent),
@@ -592,7 +625,10 @@ router.post("/orders", async (request, response) => {
       discountAmount,
       deliveryFee,
       total,
-      promoCode: promo?.code || null
+      promoCode: promo?.code || null,
+      paymentReceiptUrl: effectiveReceiptUrl,
+      paymentBank: effectivePaymentBank,
+      transactionId: effectiveTransactionId
     });
   } catch (error) {
     await connection.rollback();

@@ -1,8 +1,23 @@
 import { randomUUID } from "node:crypto";
 import { mkdir, unlink, writeFile } from "node:fs/promises";
 import { basename, dirname, resolve } from "node:path";
-import { productUploadDirectory } from "../config/index.js";
+import { productUploadDirectory, receiptUploadDirectory } from "../config/index.js";
 import { imageExtension } from "../middleware/upload.js";
+
+export async function saveOrderReceiptImage(file) {
+  if (!file?.buffer) {
+    throw Object.assign(new Error("Please upload a receipt photo."), { statusCode: 400 });
+  }
+  await mkdir(receiptUploadDirectory, { recursive: true });
+  const extension = imageExtension(file.buffer);
+  if (!extension) {
+    throw Object.assign(new Error("Receipt must be a valid JPG, PNG, or WebP photo."), { statusCode: 400 });
+  }
+  const filename = `receipt-${Date.now()}-${randomUUID()}${extension}`;
+  const diskPath = resolve(receiptUploadDirectory, filename);
+  await writeFile(diskPath, file.buffer);
+  return { diskPath, publicUrl: `/uploads/receipts/${filename}` };
+}
 
 export async function saveProductImages(files) {
   if (!files?.length) {

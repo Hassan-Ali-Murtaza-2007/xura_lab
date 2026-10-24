@@ -41,3 +41,25 @@ export const productImageUpload = multer({
     );
   }
 });
+
+export const orderReceiptUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { files: 1, fileSize: 10 * 1024 * 1024 },
+  fileFilter: (_request, file, callback) => {
+    if (
+      [
+        "image/jpeg",
+        "image/jpg",
+        "image/pjpeg",
+        "image/png",
+        "image/x-png",
+        "image/webp"
+      ].includes(file.mimetype?.toLowerCase())
+    ) {
+      return callback(null, true);
+    }
+    callback(
+      Object.assign(new Error("Receipt must be a JPG, PNG, or WebP photo."), { statusCode: 400 })
+    );
+  }
+});

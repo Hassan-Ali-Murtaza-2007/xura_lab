@@ -320,6 +320,23 @@ export default function AdminOrders() {
                             </td>
                             <td>
                               <span className="admin-payment-pill">{displayPayment(order.paymentMethod)}</span>
+                              {order.paymentBank && (
+                                <span className="admin-order-bank-pill">🏦 {order.paymentBank}</span>
+                              )}
+                              {order.paymentReceiptUrl ? (
+                                <button
+                                  type="button"
+                                  className="admin-receipt-chip-btn"
+                                  onClick={() => setSelectedOrder(order)}
+                                  title="View customer payment receipt"
+                                >
+                                  📸 Receipt Attached
+                                </button>
+                              ) : (
+                                order.paymentMethod === "bank-transfer" && (
+                                  <small className="admin-receipt-none-label">No receipt</small>
+                                )
+                              )}
                             </td>
                             <td>
                               <strong>{money(order.total)}</strong>
@@ -450,6 +467,12 @@ export default function AdminOrders() {
                 <div className="admin-order-info-card">
                   <h4>Payment & Delivery</h4>
                   <p><strong>Method:</strong> {displayPayment(selectedOrder.paymentMethod)}</p>
+                  {selectedOrder.paymentBank && (
+                    <p><strong>Bank/Wallet:</strong> <span className="admin-order-code-badge">{selectedOrder.paymentBank}</span></p>
+                  )}
+                  {selectedOrder.transactionId && (
+                    <p><strong>Transaction ID:</strong> <code>{selectedOrder.transactionId}</code></p>
+                  )}
                   <p>
                     <strong>Shipping:</strong>{" "}
                     {Number(selectedOrder.deliveryFee) === 0
@@ -464,6 +487,53 @@ export default function AdminOrders() {
                   )}
                 </div>
               </div>
+
+              {/* Advance Payment Receipt Section */}
+              {selectedOrder.paymentReceiptUrl ? (
+                <div className="admin-order-receipt-section">
+                  <div className="admin-order-receipt-card">
+                    <div className="admin-order-receipt-header">
+                      <div>
+                        <p className="admin-eyebrow">ADVANCE PAYMENT VERIFICATION</p>
+                        <h4>Customer Payment Receipt</h4>
+                      </div>
+                      <div className="admin-receipt-header-meta">
+                        <span className="admin-receipt-bank-badge">🏦 {selectedOrder.paymentBank || "Advance Payment"}</span>
+                        {selectedOrder.transactionId && (
+                          <span className="admin-receipt-tid-badge">TID: {selectedOrder.transactionId}</span>
+                        )}
+                        <a
+                          href={selectedOrder.paymentReceiptUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="admin-receipt-open-btn"
+                        >
+                          Open Full Image ↗
+                        </a>
+                      </div>
+                    </div>
+                    <div className="admin-receipt-img-container">
+                      <a
+                        href={selectedOrder.paymentReceiptUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        title="Click to view full image in a new tab"
+                      >
+                        <img
+                          src={selectedOrder.paymentReceiptUrl}
+                          alt={`Payment receipt for order #${selectedOrder.id}`}
+                          className="admin-receipt-preview-img"
+                        />
+                      </a>
+                    </div>
+                  </div>
+                </div>
+              ) : selectedOrder.paymentMethod === "bank-transfer" ? (
+                <div className="admin-order-no-receipt-notice">
+                  <span>ℹ️</span>
+                  <p>This order was placed via Advance Payment / Bank Transfer, but no receipt screenshot was uploaded.</p>
+                </div>
+              ) : null}
 
               {/* Items Table */}
               <div className="admin-order-items-section">

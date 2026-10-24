@@ -6,7 +6,8 @@ const migrationFiles = [
   new URL("../../../../database/migrations/008_product_categories_testers_bundles.sql", import.meta.url),
   new URL("../../../../database/migrations/009_product_bundle_items.sql", import.meta.url),
   new URL("../../../../database/migrations/011_customer_accounts.sql", import.meta.url),
-  new URL("../../../../database/migrations/012_product_bundle_discount.sql", import.meta.url)
+  new URL("../../../../database/migrations/012_product_bundle_discount.sql", import.meta.url),
+  new URL("../../../../database/migrations/013_order_advance_payment_receipt.sql", import.meta.url)
 ];
 
 export async function repairCheckoutSchema(connection) {

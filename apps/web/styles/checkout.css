@@ -964,3 +964,438 @@
   color: #1e5a32;
   font-weight: 500;
 }
+
+/* ==========================================================================
+   ADVANCE PAYMENT MANUAL TRANSFER & RECEIPT UPLOAD
+   ========================================================================== */
+
+.checkout-advance-box {
+  margin: 10px 0 16px;
+  padding: 22px 20px;
+  background: rgba(255, 255, 255, 0.55);
+  border: 1px solid rgba(57, 70, 63, 0.22);
+  border-radius: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.checkout-advance-badge-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding-bottom: 14px;
+  border-bottom: 1px dashed rgba(57, 70, 63, 0.2);
+}
+
+.checkout-advance-free-pill {
+  display: inline-flex;
+  align-items: center;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: #1c5230;
+  background: #e1f4e7;
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(28, 82, 48, 0.2);
+}
+
+.checkout-advance-amount-pill {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.checkout-advance-instructions {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.checkout-advance-step-title {
+  margin: 0 0 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+  letter-spacing: 0.01em;
+}
+
+.checkout-advance-subtext {
+  margin: -4px 0 10px;
+  font-size: 12px;
+  color: #636b66;
+  line-height: 1.45;
+}
+
+.checkout-required-star {
+  color: #b02a2a;
+  font-weight: 700;
+}
+
+/* Account Details Box */
+.checkout-account-card {
+  background: #ffffff;
+  border: 1px solid rgba(57, 70, 63, 0.18);
+  border-radius: 4px;
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
+}
+
+.checkout-account-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 13px;
+}
+
+.checkout-acc-label {
+  color: #6c736e;
+  font-weight: 500;
+  font-size: 12px;
+}
+
+.checkout-acc-val {
+  color: var(--ink);
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.checkout-acc-number-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.checkout-acc-number {
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  font-family: monospace, var(--sans);
+  color: var(--ink);
+  background: rgba(57, 70, 63, 0.08);
+  padding: 3px 8px;
+  border-radius: 3px;
+}
+
+.checkout-copy-btn {
+  padding: 4px 12px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ink);
+  background: #f0ede6;
+  border: 1px solid rgba(57, 70, 63, 0.28);
+  border-radius: 3px;
+  cursor: pointer;
+  transition: all 160ms ease;
+}
+
+.checkout-copy-btn:hover {
+  background: var(--ink);
+  color: #ffffff;
+  border-color: var(--ink);
+}
+
+.checkout-copy-btn.is-copied {
+  background: #1e5a32;
+  color: #ffffff;
+  border-color: #1e5a32;
+}
+
+.checkout-acc-banks {
+  font-weight: 600;
+  font-size: 12.5px;
+  color: #2b3b33;
+}
+
+/* Wallet Selection Pills */
+.checkout-bank-select-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.checkout-step-sublabel {
+  font-size: 12px;
+  font-weight: 600;
+  color: #4f5752;
+}
+
+.checkout-bank-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px;
+}
+
+.checkout-bank-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 16px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #3b4540;
+  background: #ffffff;
+  border: 1.5px solid rgba(57, 70, 63, 0.22);
+  border-radius: 999px;
+  cursor: pointer;
+  transition: all 150ms ease;
+}
+
+.checkout-bank-pill:hover {
+  border-color: var(--ink);
+}
+
+.checkout-bank-pill.is-active {
+  color: var(--ink);
+  background: #e8f0ec;
+  border-color: #1c5230;
+  box-shadow: 0 0 0 1px #1c5230;
+}
+
+.checkout-bank-pill-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(57, 70, 63, 0.4);
+  background: transparent;
+  transition: all 150ms ease;
+}
+
+.checkout-bank-pill.is-active .checkout-bank-pill-dot {
+  background: #1c5230;
+  border-color: #1c5230;
+}
+
+/* Receipt Upload Dropzone */
+.checkout-receipt-upload-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.checkout-receipt-dropzone {
+  display: block;
+  border: 2px dashed rgba(57, 70, 63, 0.35);
+  border-radius: 6px;
+  padding: 24px 20px;
+  text-align: center;
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.4);
+  transition: all 180ms ease;
+}
+
+.checkout-receipt-dropzone:hover {
+  background: rgba(255, 255, 255, 0.85);
+  border-color: var(--ink);
+}
+
+.checkout-dropzone-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.checkout-dropzone-icon {
+  font-size: 26px;
+  margin-bottom: 2px;
+}
+
+.checkout-dropzone-content strong {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.checkout-dropzone-content small {
+  font-size: 11px;
+  color: #707772;
+}
+
+/* Receipt Preview Card */
+.checkout-receipt-preview-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 14px;
+  background: #ffffff;
+  border: 1.5px solid #1c5230;
+  border-radius: 4px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
+}
+
+.checkout-receipt-thumb-box {
+  width: 52px;
+  height: 52px;
+  border-radius: 3px;
+  overflow: hidden;
+  background: #eae6df;
+  flex-shrink: 0;
+  border: 1px solid rgba(57, 70, 63, 0.2);
+}
+
+.checkout-receipt-thumb-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.checkout-receipt-info {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  flex: 1;
+  min-width: 0;
+}
+
+.checkout-receipt-verified-tag {
+  font-size: 10.5px;
+  font-weight: 700;
+  color: #1e5a32;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.checkout-receipt-filename {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.checkout-receipt-info small {
+  font-size: 11px;
+  color: #707772;
+}
+
+.checkout-receipt-remove-btn {
+  padding: 5px 12px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #8c2626;
+  background: #fdf2f2;
+  border: 1px solid rgba(140, 38, 38, 0.25);
+  border-radius: 3px;
+  cursor: pointer;
+  transition: all 140ms ease;
+}
+
+.checkout-receipt-remove-btn:hover {
+  background: #8c2626;
+  color: #ffffff;
+}
+
+.checkout-receipt-error {
+  margin: 6px 0 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: #b02a2a;
+}
+
+.checkout-tid-wrap {
+  margin-top: 2px;
+}
+
+/* Confirmation Page Receipt Card */
+.checkout-confirmation-receipt-card {
+  margin-top: 24px;
+  padding: 20px 22px;
+  background: #f5f3ee;
+  border: 1px solid rgba(57, 70, 63, 0.2);
+  border-radius: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  text-align: left;
+}
+
+.checkout-receipt-confirm-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.checkout-receipt-check {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #1e5a32;
+  color: #ffffff;
+  display: grid;
+  place-items: center;
+  font-size: 13px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.checkout-receipt-confirm-header strong {
+  display: block;
+  font-size: 14.5px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.checkout-receipt-confirm-header p {
+  margin: 2px 0 0;
+  font-size: 12px;
+  color: #616a65;
+}
+
+.checkout-receipt-tid-confirm {
+  margin: 0;
+  font-size: 12.5px;
+  color: #49524d;
+}
+
+.checkout-receipt-preview-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.checkout-receipt-preview-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 12px;
+  background: #ffffff;
+  border: 1px solid rgba(57, 70, 63, 0.25);
+  border-radius: 4px;
+  text-decoration: none;
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 600;
+  transition: all 160ms ease;
+}
+
+.checkout-receipt-preview-link:hover {
+  border-color: var(--ink);
+  background: #f0ede6;
+}
+
+.checkout-receipt-confirm-img {
+  width: 36px;
+  height: 36px;
+  object-fit: cover;
+  border-radius: 3px;
+  border: 1px solid rgba(57, 70, 63, 0.15);
+}
+
+.checkout-receipt-note {
+  margin: 0;
+  font-size: 12px;
+  color: #555e58;
+  line-height: 1.5;
+}

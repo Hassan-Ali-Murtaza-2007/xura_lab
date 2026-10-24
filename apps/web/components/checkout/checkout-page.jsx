@@ -92,7 +92,12 @@ export default function CheckoutPage() {
   const [hydrated, setHydrated] = useState(false);
   const [billingSame, setBillingSame] = useState(true);
   const [paymentMode, setPaymentMode] = useState("advance");
-  const [advanceMethod, setAdvanceMethod] = useState("bank-transfer");
+  const [selectedBank, setSelectedBank] = useState("JazzCash");
+  const [receiptFile, setReceiptFile] = useState(null);
+  const [receiptPreview, setReceiptPreview] = useState(null);
+  const [receiptError, setReceiptError] = useState("");
+  const [transactionId, setTransactionId] = useState("");
+  const [copiedNumber, setCopiedNumber] = useState(false);
   const [status, setStatus] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [confirmedOrder, setConfirmedOrder] = useState(null);
@@ -102,6 +107,50 @@ export default function CheckoutPage() {
   const [appliedPromo, setAppliedPromo] = useState(null);
   const [promoError, setPromoError] = useState("");
   const [promoLoading, setPromoLoading] = useState(false);
+
+  useEffect(() => {
+    return () => {
+      if (receiptPreview) {
+        URL.revokeObjectURL(receiptPreview);
+      }
+    };
+  }, [receiptPreview]);
+
+  const copyAccountDetails = () => {
+    if (typeof navigator !== "undefined" && navigator.clipboard?.writeText) {
+      navigator.clipboard.writeText("03129181720");
+      setCopiedNumber(true);
+      setTimeout(() => setCopiedNumber(false), 2000);
+    }
+  };
+
+  const handleReceiptFileChange = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
+      setReceiptError("Please select a JPG, PNG, or WebP image.");
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      setReceiptError("Receipt file size cannot exceed 10MB.");
+      return;
+    }
+    setReceiptError("");
+    if (receiptPreview) {
+      URL.revokeObjectURL(receiptPreview);
+    }
+    setReceiptFile(file);
+    setReceiptPreview(URL.createObjectURL(file));
+  };
+
+  const handleRemoveReceipt = () => {
+    if (receiptPreview) {
+      URL.revokeObjectURL(receiptPreview);
+    }
+    setReceiptFile(null);
+    setReceiptPreview(null);
+    setReceiptError("");
+  };
 
   useEffect(() => {
     const stored = window.localStorage.getItem("xura-cart");
@@ -191,33 +240,62 @@ export default function CheckoutPage() {
 
   async function submitOrder(event) {
     event.preventDefault();
+    setReceiptError("");
+
+    if (paymentMode === "advance" && !receiptFile) {
+      setReceiptError("Please attach a photo or screenshot of your payment receipt to complete advance payment.");
+      const dropzone = document.getElementById("checkout-receipt-section");
+      if (dropzone) dropzone.scrollIntoView({ behavior: "smooth", block: "center" });
+      return;
+    }
+
     setSubmitting(true);
-    setStatus("Placing your order…");
-    const formData = new FormData(event.currentTarget);
-    const shippingAddress = formAddress(formData, "shipping");
-    const paymentMethod = paymentMode === "advance" ? advanceMethod : "cash-on-delivery";
-    const payload = {
-      email: formData.get("email"),
-      phone: formData.get("phone"),
-      marketingConsent: formData.get("marketingConsent") === "on",
-      shippingAddress,
-      shippingMethod: formData.get("shippingMethod"),
-      paymentMethod,
-      billingSameAsShipping: billingSame,
-      billingAddress: billingSame ? null : formAddress(formData, "billing"),
-      orderNote: formData.get("orderNote"),
-      promoCode: appliedPromo?.code || null,
-      items: cart.map((item) => ({
-        productId: item.id,
-        variantId: item.variantId || null,
-        quantity: item.quantity,
-        price: item.price,
-        bundleSelectionText: item.bundleSelectionText || null,
-        bundleSelections: item.bundleSelections || null
-      }))
-    };
+    let uploadedReceiptUrl = null;
 
     try {
+      if (paymentMode === "advance" && receiptFile) {
+        setStatus("Uploading your payment receipt…");
+        const receiptFormData = new FormData();
+        receiptFormData.append("receipt", receiptFile);
+        const uploadRes = await fetch("/api/orders/receipt", {
+          method: "POST",
+          body: receiptFormData
+        });
+        const uploadData = await uploadRes.json();
+        if (!uploadRes.ok || !uploadData.receiptUrl) {
+          throw new Error(uploadData.message || "Failed to upload payment receipt. Please try again.");
+        }
+        uploadedReceiptUrl = uploadData.receiptUrl;
+      }
+
+      setStatus("Placing your order…");
+      const formData = new FormData(event.currentTarget);
+      const shippingAddress = formAddress(formData, "shipping");
+      const paymentMethod = paymentMode === "advance" ? "bank-transfer" : "cash-on-delivery";
+      const payload = {
+        email: formData.get("email"),
+        phone: formData.get("phone"),
+        marketingConsent: formData.get("marketingConsent") === "on",
+        shippingAddress,
+        shippingMethod: formData.get("shippingMethod"),
+        paymentMethod,
+        paymentReceiptUrl: uploadedReceiptUrl,
+        paymentBank: paymentMode === "advance" ? selectedBank : null,
+        transactionId: paymentMode === "advance" && transactionId.trim() ? transactionId.trim() : null,
+        billingSameAsShipping: billingSame,
+        billingAddress: billingSame ? null : formAddress(formData, "billing"),
+        orderNote: formData.get("orderNote"),
+        promoCode: appliedPromo?.code || null,
+        items: cart.map((item) => ({
+          productId: item.id,
+          variantId: item.variantId || null,
+          quantity: item.quantity,
+          price: item.price,
+          bundleSelectionText: item.bundleSelectionText || null,
+          bundleSelections: item.bundleSelections || null
+        }))
+      };
+
       const response = await fetch("/api/orders", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -262,6 +340,41 @@ export default function CheckoutPage() {
           <p className="checkout-confirmation-benefit checkout-free-shipping-tag">
             ✓ Complimentary free delivery applied for advance payment
           </p>
+        )}
+        {confirmedOrder.paymentReceiptUrl && (
+          <div className="checkout-confirmation-receipt-card">
+            <div className="checkout-receipt-confirm-header">
+              <span className="checkout-receipt-check">✓</span>
+              <div>
+                <strong>Advance Payment Received</strong>
+                <p>Transfer via <strong>{confirmedOrder.paymentBank || "Advance Payment"}</strong> to Muhammad Aarib</p>
+              </div>
+            </div>
+            {confirmedOrder.transactionId && (
+              <p className="checkout-receipt-tid-confirm">
+                Transaction ID: <strong>{confirmedOrder.transactionId}</strong>
+              </p>
+            )}
+            <div className="checkout-receipt-preview-row">
+              <a
+                href={confirmedOrder.paymentReceiptUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="checkout-receipt-preview-link"
+                title="View full receipt photo"
+              >
+                <img
+                  src={confirmedOrder.paymentReceiptUrl}
+                  alt="Payment receipt"
+                  className="checkout-receipt-confirm-img"
+                />
+                <span>View Uploaded Receipt ↗</span>
+              </a>
+            </div>
+            <p className="checkout-receipt-note">
+              Our team will verify your transfer to Muhammad Aarib (03129181720) and dispatch your order.
+            </p>
+          </div>
         )}
         <Link className="checkout-return-button" href="/">CONTINUE SHOPPING</Link>
       </main>
@@ -373,15 +486,128 @@ export default function CheckoutPage() {
                   </span>
                 </label>
                 {paymentMode === "advance" && (
-                  <div className="checkout-payment-suboptions" role="radiogroup" aria-label="Advance payment method">
-                    <label className={`checkout-choice checkout-subchoice ${advanceMethod === "bank-transfer" ? "is-selected" : ""}`}>
-                      <input type="radio" name="advanceMethod" value="bank-transfer" checked={advanceMethod === "bank-transfer"} onChange={() => setAdvanceMethod("bank-transfer")} />
-                      <span><strong>Bank transfer</strong><small>Account details will be provided after your order is placed.</small></span>
-                    </label>
-                    <label className={`checkout-choice checkout-subchoice ${advanceMethod === "card" ? "is-selected" : ""}`}>
-                      <input type="radio" name="advanceMethod" value="card" checked={advanceMethod === "card"} onChange={() => setAdvanceMethod("card")} />
-                      <span><strong>Card</strong><small>Complete payment through a secure payment link after placing the order.</small></span>
-                    </label>
+                  <div className="checkout-advance-box" id="checkout-receipt-section">
+                    <div className="checkout-advance-badge-row">
+                      <span className="checkout-advance-free-pill">✓ 100% FREE NATIONWIDE COURIER DELIVERY</span>
+                      <span className="checkout-advance-amount-pill">Total: {money(total)}</span>
+                    </div>
+
+                    <div className="checkout-advance-instructions">
+                      <p className="checkout-advance-step-title">
+                        1. Send <strong>{money(total)}</strong> to Muhammad Aarib
+                      </p>
+
+                      {/* Account Details Box */}
+                      <div className="checkout-account-card">
+                        <div className="checkout-account-row">
+                          <span className="checkout-acc-label">Account Name:</span>
+                          <strong className="checkout-acc-val">Muhammad Aarib</strong>
+                        </div>
+                        <div className="checkout-account-row">
+                          <span className="checkout-acc-label">Account / Mobile:</span>
+                          <div className="checkout-acc-number-wrap">
+                            <strong className="checkout-acc-number">03129181720</strong>
+                            <button
+                              type="button"
+                              className={`checkout-copy-btn ${copiedNumber ? "is-copied" : ""}`}
+                              onClick={copyAccountDetails}
+                              aria-label="Copy account number"
+                            >
+                              {copiedNumber ? "✓ Copied!" : "Copy Number"}
+                            </button>
+                          </div>
+                        </div>
+                        <div className="checkout-account-row">
+                          <span className="checkout-acc-label">Banks / Wallets:</span>
+                          <span className="checkout-acc-banks">JazzCash · Easypaisa · SadaPay</span>
+                        </div>
+                      </div>
+
+                      {/* Bank / Wallet selection pills */}
+                      <div className="checkout-bank-select-wrap">
+                        <label className="checkout-step-sublabel">Select the wallet you transferred from:</label>
+                        <div className="checkout-bank-pills" role="radiogroup" aria-label="Selected payment wallet">
+                          {["JazzCash", "Easypaisa", "SadaPay"].map((bank) => (
+                            <button
+                              key={bank}
+                              type="button"
+                              role="radio"
+                              aria-checked={selectedBank === bank}
+                              className={`checkout-bank-pill ${selectedBank === bank ? "is-active" : ""}`}
+                              onClick={() => setSelectedBank(bank)}
+                            >
+                              <span className="checkout-bank-pill-dot" />
+                              <span>{bank}</span>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Step 2: Receipt upload */}
+                      <div className="checkout-receipt-upload-wrap">
+                        <p className="checkout-advance-step-title">
+                          2. Upload Payment Receipt / Screenshot <span className="checkout-required-star">*</span>
+                        </p>
+                        <p className="checkout-advance-subtext">
+                          Upload the screenshot of your transfer so we can verify and approve your order.
+                        </p>
+
+                        {!receiptFile ? (
+                          <label className="checkout-receipt-dropzone">
+                            <input
+                              type="file"
+                              accept="image/jpeg,image/png,image/webp"
+                              onChange={handleReceiptFileChange}
+                              className="sr-only"
+                            />
+                            <div className="checkout-dropzone-content">
+                              <span className="checkout-dropzone-icon">📸</span>
+                              <strong>Click to choose receipt photo / screenshot</strong>
+                              <small>Supported formats: JPG, PNG, WebP (up to 10MB)</small>
+                            </div>
+                          </label>
+                        ) : (
+                          <div className="checkout-receipt-preview-card">
+                            <div className="checkout-receipt-thumb-box">
+                              <img src={receiptPreview} alt="Receipt preview" className="checkout-receipt-thumb-img" />
+                            </div>
+                            <div className="checkout-receipt-info">
+                              <div className="checkout-receipt-verified-tag">✓ Receipt attached</div>
+                              <strong className="checkout-receipt-filename">{receiptFile.name}</strong>
+                              <small>{(receiptFile.size / 1024).toFixed(0)} KB · Ready for order verification</small>
+                            </div>
+                            <button
+                              type="button"
+                              className="checkout-receipt-remove-btn"
+                              onClick={handleRemoveReceipt}
+                              title="Remove receipt image"
+                            >
+                              Remove
+                            </button>
+                          </div>
+                        )}
+
+                        {receiptError && (
+                          <p className="checkout-receipt-error" role="alert">
+                            ⚠️ {receiptError}
+                          </p>
+                        )}
+                      </div>
+
+                      {/* Step 3: Optional Transaction ID */}
+                      <div className="checkout-tid-wrap">
+                        <label className="checkout-field">
+                          <span>Transaction ID / TID <small>(optional)</small></span>
+                          <input
+                            type="text"
+                            value={transactionId}
+                            onChange={(e) => setTransactionId(e.target.value)}
+                            placeholder="e.g. 01849204928"
+                            maxLength={100}
+                          />
+                        </label>
+                      </div>
+                    </div>
                   </div>
                 )}
                 <label className={`checkout-choice ${paymentMode === "cash-on-delivery" ? "is-selected" : ""}`}>
