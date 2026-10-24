@@ -446,7 +446,13 @@ export default function CheckoutPage() {
               {cart.map((item) => (
                 <div className="checkout-summary-item" key={itemKey(item)}>
                   <div className="checkout-summary-image">
-                    <Image src={item.imageUrl} width={88} height={88} alt={`${item.name} fragrance`} />
+                    <Image
+                      src={item.imageUrl || "/images/xura-hero-4k.jpg"}
+                      width={88}
+                      height={88}
+                      alt={`${item.name} fragrance`}
+                      unoptimized={Boolean(item.imageUrl && (item.imageUrl.startsWith("/uploads/") || item.imageUrl.startsWith("blob:")))}
+                    />
                     <span>{item.quantity}</span>
                   </div>
                   <div>

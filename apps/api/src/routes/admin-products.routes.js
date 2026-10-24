@@ -269,8 +269,8 @@ router.put("/products/:id", requireAdmin, productImageUpload.array("images", 5),
       const currentProduct = products[0];
       const currentImages = await productImagesById(connection, [productId]);
       const existingImageUrls = currentImages.get(productId)?.length
-        ? currentImages.get(productId)
-        : [currentProduct.imageUrl];
+        ? currentImages.get(productId).filter(Boolean)
+        : (currentProduct.imageUrl ? [currentProduct.imageUrl] : []);
       const retainedImages = retainedProductImages(request.body.retainedImages, existingImageUrls);
       const availableImages =
         retainedImages === null

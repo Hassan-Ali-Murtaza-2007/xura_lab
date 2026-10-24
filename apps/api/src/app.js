@@ -1,7 +1,8 @@
 import cors from "cors";
 import express from "express";
 import multer from "multer";
-import { webOrigin } from "./config/index.js";
+import { resolve } from "node:path";
+import { productUploadDirectory, webOrigin } from "./config/index.js";
 import apiRouter from "./routes/index.js";
 
 const app = express();
@@ -29,6 +30,10 @@ app.use(
   })
 );
 app.use(express.json({ limit: "32kb" }));
+
+// Serve uploaded assets statically
+app.use("/uploads/products", express.static(productUploadDirectory));
+app.use("/uploads", express.static(resolve(productUploadDirectory, "..")));
 
 // Mount central API router under /api
 app.use("/api", apiRouter);

@@ -27,7 +27,13 @@ export default function CartDrawer({
           {!cart.length && <p className="cart-empty">Your cart is waiting for a fragrance that feels like you.</p>}
           {cart.map((item) => (
             <div className="cart-item" key={itemKey(item)}>
-              <Image src={item.imageUrl} width={72} height={72} alt={`${item.name} fragrance`} />
+              <Image
+                src={item.imageUrl || "/images/xura-hero-4k.jpg"}
+                width={72}
+                height={72}
+                alt={`${item.name} fragrance`}
+                unoptimized={Boolean(item.imageUrl && (item.imageUrl.startsWith("/uploads/") || item.imageUrl.startsWith("blob:")))}
+              />
               <div className="cart-item-copy">
                 <strong>{item.name}{!item.bundleSelectionText && item.concentration ? ` ${item.concentration}%` : ""}</strong>
                 {item.bundleSelectionText ? (

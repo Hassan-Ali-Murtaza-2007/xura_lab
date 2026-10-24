@@ -91,9 +91,10 @@ export default function ProductCard({ product, onAddToCart }) {
           aria-label={`View ${product.name}`}
         >
           <Image
-            src={product.imageUrl}
+            src={product.imageUrl || "/images/xura-hero-4k.jpg"}
             alt={`${product.name} fragrance`}
             fill
+            unoptimized={Boolean(product.imageUrl && (product.imageUrl.startsWith("/uploads/") || product.imageUrl.startsWith("blob:")))}
             sizes="(max-width: 720px) calc(100vw - 32px), (max-width: 1120px) 50vw, 33vw"
           />
         </Link>

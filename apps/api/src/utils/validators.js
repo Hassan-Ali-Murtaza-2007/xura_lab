@@ -19,6 +19,15 @@ export const productSummary = (product) => ({
   variants: product.variants
 });
 
+function defaultPriceForConc(conc) {
+  const c = Number(conc);
+  if (c === 10) return 2500;
+  if (c === 20) return 3500;
+  if (c === 25) return 4500;
+  if (c === 40) return 5500;
+  return 2500 + Math.round((c / 10) * 1000);
+}
+
 export function parseProductInput(body) {
   let rawVariants;
   try {
@@ -32,15 +41,48 @@ export function parseProductInput(body) {
     try {
       const parsed = typeof body.bundleItems === "string" ? JSON.parse(body.bundleItems) : body.bundleItems;
       if (Array.isArray(parsed) && parsed.length > 0) {
-        bundleItems = parsed.map((item) => ({
-          name: String(item.name || "").trim().slice(0, 120),
-          tagline: String(item.tagline || "").trim().slice(0, 255),
-          volumeMl: Number(item.volumeMl) || 50,
-          concentrations: Array.isArray(item.concentrations) && item.concentrations.length
-            ? item.concentrations.map(Number).filter((c) => Number.isInteger(c) && c > 0)
-            : [10, 20, 40],
-          defaultConcentration: Number(item.defaultConcentration) || 20
-        }));
+        bundleItems = parsed.map((item) => {
+          let concentrations = [];
+          if (Array.isArray(item.concentrations) && item.concentrations.length > 0) {
+            concentrations = item.concentrations
+              .map((c) => {
+                if (typeof c === "object" && c !== null) {
+                  const pct = Number(c.concentrationPercent || c.concentration);
+                  const price = Number(c.price);
+                  const rawCompare = Number(c.compareAtPrice);
+                  const compareAtPrice = Number.isFinite(rawCompare) && rawCompare > price ? rawCompare : null;
+                  if (!Number.isInteger(pct) || pct <= 0) return null;
+                  return {
+                    concentrationPercent: pct,
+                    price: Number.isFinite(price) && price > 0 ? price : defaultPriceForConc(pct),
+                    compareAtPrice
+                  };
+                }
+                const num = Number(c);
+                if (!Number.isInteger(num) || num <= 0) return null;
+                return {
+                  concentrationPercent: num,
+                  price: defaultPriceForConc(num),
+                  compareAtPrice: null
+                };
+              })
+              .filter(Boolean);
+          }
+          if (!concentrations.length) {
+            concentrations = [
+              { concentrationPercent: 10, price: 2500, compareAtPrice: null },
+              { concentrationPercent: 20, price: 3500, compareAtPrice: null },
+              { concentrationPercent: 40, price: 5500, compareAtPrice: null }
+            ];
+          }
+          return {
+            name: String(item.name || "").trim().slice(0, 120),
+            tagline: String(item.tagline || "").trim().slice(0, 255),
+            volumeMl: Number(item.volumeMl) || 50,
+            concentrations,
+            defaultConcentration: Number(item.defaultConcentration) || 20
+          };
+        });
       }
     } catch {
       bundleItems = null;

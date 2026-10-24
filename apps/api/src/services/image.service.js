@@ -69,13 +69,22 @@ export function retainedProductImages(rawRetainedImages, currentImages) {
   if (!Array.isArray(requested)) {
     throw Object.assign(new Error("The retained image list is invalid."), { statusCode: 400 });
   }
-  const available = new Set(currentImages);
+  const available = new Set((currentImages || []).filter(Boolean));
   const retained = [];
   for (const imageUrl of requested) {
-    if (typeof imageUrl !== "string" || !available.has(imageUrl)) {
+    if (typeof imageUrl !== "string" || !imageUrl.trim()) continue;
+    const cleanUrl = imageUrl.trim();
+    const isAllowed =
+      available.has(cleanUrl) ||
+      cleanUrl.startsWith("/images/") ||
+      cleanUrl.startsWith("/uploads/") ||
+      cleanUrl.startsWith("http://") ||
+      cleanUrl.startsWith("https://");
+
+    if (!isAllowed) {
       throw Object.assign(new Error("An existing product image could not be verified."), { statusCode: 400 });
     }
-    if (!retained.includes(imageUrl)) retained.push(imageUrl);
+    if (!retained.includes(cleanUrl)) retained.push(cleanUrl);
   }
   return retained;
 }

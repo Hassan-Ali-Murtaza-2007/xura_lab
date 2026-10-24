@@ -49,8 +49,11 @@ export default function ProductDetail({ product }) {
   const [cartOpen, setCartOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [openSpecifications, setOpenSpecifications] = useState([]);
-  const productImages = useMemo(() => product.images?.length ? product.images : [product.imageUrl], [product]);
-  const [activeImage, setActiveImage] = useState(productImages[0]);
+  const productImages = useMemo(() => {
+    const list = (product.images?.length ? product.images : [product.imageUrl]).filter(Boolean);
+    return list.length ? list : ["/images/xura-hero-4k.jpg"];
+  }, [product]);
+  const [activeImage, setActiveImage] = useState(productImages[0] || "/images/xura-hero-4k.jpg");
 
   useEffect(() => {
     const stored = window.localStorage.getItem("xura-cart");
@@ -84,17 +87,17 @@ export default function ProductDetail({ product }) {
   const isBundle = product.gender === "Bundles" || Boolean(product.bundleItems?.length);
 
   const bundleBottles = useMemo(() => {
+    let items = [];
     if (product.bundleItems && Array.isArray(product.bundleItems) && product.bundleItems.length > 0) {
-      return product.bundleItems;
-    }
-    if (product.gender === "Bundles" || product.slug?.includes("bundle") || product.name?.toLowerCase().includes("bundle")) {
+      items = product.bundleItems;
+    } else if (product.gender === "Bundles" || product.slug?.includes("bundle") || product.name?.toLowerCase().includes("bundle")) {
       const nameLower = product.name?.toLowerCase() || "";
       const hasVelor = nameLower.includes("velor");
       const hasNyra = nameLower.includes("nyra");
       const hasArven = nameLower.includes("arven");
 
       if (hasVelor && hasArven && !hasNyra) {
-        return [
+        items = [
           {
             name: "Velor",
             tagline: "Bright bergamot, cedarwood & smoky vetiver",
@@ -110,9 +113,8 @@ export default function ProductDetail({ product }) {
             defaultConcentration: 10
           }
         ];
-      }
-      if (hasVelor && hasNyra && !hasArven) {
-        return [
+      } else if (hasVelor && hasNyra && !hasArven) {
+        items = [
           {
             name: "Nyra",
             tagline: "Luminous white florals, roasted coffee & vanilla",
@@ -128,25 +130,40 @@ export default function ProductDetail({ product }) {
             defaultConcentration: 10
           }
         ];
+      } else {
+        items = [
+          {
+            name: "Nyra",
+            tagline: "Luminous white florals, roasted coffee & vanilla",
+            volumeMl: product.volumeMl || 50,
+            concentrations: [10, 20, 40],
+            defaultConcentration: 20
+          },
+          {
+            name: "Arven",
+            tagline: "Rich oud, warm amber & refined leather",
+            volumeMl: product.volumeMl || 50,
+            concentrations: [10, 20, 40],
+            defaultConcentration: 10
+          }
+        ];
       }
-      return [
-        {
-          name: "Nyra",
-          tagline: "Luminous white florals, roasted coffee & vanilla",
-          volumeMl: product.volumeMl || 50,
-          concentrations: [10, 20, 40],
-          defaultConcentration: 20
-        },
-        {
-          name: "Arven",
-          tagline: "Rich oud, warm amber & refined leather",
-          volumeMl: product.volumeMl || 50,
-          concentrations: [10, 20, 40],
-          defaultConcentration: 10
-        }
-      ];
     }
-    return [];
+
+    return items.map((b, idx) => {
+      const concs = Array.isArray(b.concentrations) && b.concentrations.length > 0
+        ? b.concentrations
+        : [
+            { concentrationPercent: 10, price: 2500, compareAtPrice: null },
+            { concentrationPercent: 20, price: 3500, compareAtPrice: null },
+            { concentrationPercent: 40, price: 5500, compareAtPrice: null }
+          ];
+      return {
+        ...b,
+        name: b.name || `Bottle ${idx + 1}`,
+        concentrations: concs
+      };
+    });
   }, [product]);
 
   const [selectedBottleConcentrations, setSelectedBottleConcentrations] = useState(() =>
@@ -410,13 +427,26 @@ export default function ProductDetail({ product }) {
           <div className="product-detail-layout">
             <div className="product-detail-gallery">
               <div className="product-detail-image">
-                <Image src={activeImage} alt={`${product.name} fragrance`} fill priority sizes="(max-width: 760px) 100vw, 573px" />
+                <Image
+                  src={activeImage || "/images/xura-hero-4k.jpg"}
+                  alt={`${product.name} fragrance`}
+                  fill
+                  priority
+                  unoptimized={Boolean(activeImage && (activeImage.startsWith("/uploads/") || activeImage.startsWith("blob:")))}
+                  sizes="(max-width: 760px) 100vw, 573px"
+                />
               </div>
               {productImages.length > 1 && (
                 <div className="product-thumbnails" aria-label={`${product.name} product images`}>
                   {productImages.map((image, index) => (
                     <button className={image === activeImage ? "is-selected" : ""} type="button" key={image} onClick={() => setActiveImage(image)} aria-label={`View image ${index + 1}`} aria-pressed={image === activeImage}>
-                      <Image src={image} alt="" fill sizes="84px" />
+                      <Image
+                        src={image}
+                        alt=""
+                        fill
+                        unoptimized={Boolean(image && (image.startsWith("/uploads/") || image.startsWith("blob:")))}
+                        sizes="84px"
+                      />
                     </button>
                   ))}
                 </div>
@@ -455,7 +485,10 @@ export default function ProductDetail({ product }) {
                           </div>
 
                           <div className="bundle-conc-grid">
-                            {(bottle.concentrations || [10, 20, 40]).map((concItem, itemIdx) => {
+                            {(Array.isArray(bottle.concentrations) && bottle.concentrations.length > 0
+                              ? bottle.concentrations
+                              : [10, 20, 40]
+                            ).map((concItem, itemIdx) => {
                               const conc = typeof concItem === "object" ? Number(concItem.concentrationPercent) : Number(concItem);
                               const isSelected = selectedConc === conc;
                               const concPrice = getPriceForConcentration(bottle.name, conc);

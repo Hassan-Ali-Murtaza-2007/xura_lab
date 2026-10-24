@@ -401,7 +401,13 @@ export default function AdminProducts() {
                         <span className="admin-product-index">{String(index + 1).padStart(2, "0")}</span>
                         <div className="admin-product-identity">
                           <span className="admin-product-thumbnail">
-                            <Image src={product.imageUrl} alt="" fill sizes="48px" />
+                            <Image
+                              src={product.imageUrl || "/images/xura-hero-4k.jpg"}
+                              alt=""
+                              fill
+                              sizes="48px"
+                              unoptimized={Boolean(product.imageUrl && (product.imageUrl.startsWith("/uploads/") || product.imageUrl.startsWith("blob:")))}
+                            />
                           </span>
                           <div>
                             <strong>{product.name}</strong>
