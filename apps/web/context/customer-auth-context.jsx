@@ -8,12 +8,13 @@ export function CustomerAuthProvider({ children }) {
   const [customer, setCustomer] = useState(null);
   const [authHydrated, setAuthHydrated] = useState(false);
   const [loginModalOpen, setLoginModalOpen] = useState(false);
+  const [hasPendingAction, setHasPendingAction] = useState(false);
   const [authMode, setAuthMode] = useState("login"); // "login" | "register"
   const [authMessage, setAuthMessage] = useState("");
   const [authError, setAuthError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Store the pending action to execute automatically upon successful login
+  // Store the pending action to execute automatically upon successful login or when dismissed as guest
   const pendingActionRef = useRef(null);
 
   // Hydrate customer from localStorage on mount
@@ -63,9 +64,25 @@ export function CustomerAuthProvider({ children }) {
     return () => document.body.classList.remove("is-locked");
   }, [loginModalOpen]);
 
+  // Handle Escape key to close modal and continue with pending cart action
+  useEffect(() => {
+    if (!loginModalOpen) return;
+    function handleKeyDown(e) {
+      if (e.key === "Escape") {
+        closeLoginModal();
+      }
+    }
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [loginModalOpen]);
+
   function openLoginModal(action = null, mode = "login") {
     if (action && typeof action === "function") {
       pendingActionRef.current = action;
+      setHasPendingAction(true);
+    } else {
+      pendingActionRef.current = null;
+      setHasPendingAction(false);
     }
     setAuthMode(mode);
     setAuthError("");
@@ -74,10 +91,23 @@ export function CustomerAuthProvider({ children }) {
   }
 
   function closeLoginModal() {
+    const pending = pendingActionRef.current;
+    pendingActionRef.current = null;
+    setHasPendingAction(false);
     setLoginModalOpen(false);
     setAuthError("");
     setAuthMessage("");
+    if (pending && typeof pending === "function") {
+      pending();
+    }
+  }
+
+  function dismissWithoutAction() {
     pendingActionRef.current = null;
+    setHasPendingAction(false);
+    setLoginModalOpen(false);
+    setAuthError("");
+    setAuthMessage("");
   }
 
   function requireAuth(action) {
@@ -112,6 +142,7 @@ export function CustomerAuthProvider({ children }) {
       // Execute pending action if any
       const pending = pendingActionRef.current;
       pendingActionRef.current = null;
+      setHasPendingAction(false);
 
       setTimeout(() => {
         setLoginModalOpen(false);
@@ -158,6 +189,7 @@ export function CustomerAuthProvider({ children }) {
 
       const pending = pendingActionRef.current;
       pendingActionRef.current = null;
+      setHasPendingAction(false);
 
       setTimeout(() => {
         setLoginModalOpen(false);
@@ -190,6 +222,7 @@ export function CustomerAuthProvider({ children }) {
     customer,
     isLoggedIn: Boolean(customer),
     loginModalOpen,
+    hasPendingAction,
     authMode,
     authError,
     authMessage,
@@ -197,6 +230,7 @@ export function CustomerAuthProvider({ children }) {
     setAuthMode,
     openLoginModal,
     closeLoginModal,
+    dismissWithoutAction,
     requireAuth,
     login,
     register,
@@ -223,6 +257,7 @@ function CustomerLoginModal() {
   const {
     loginModalOpen,
     closeLoginModal,
+    hasPendingAction,
     authMode,
     setAuthMode,
     authError,
@@ -263,6 +298,18 @@ function CustomerLoginModal() {
     login("customer@xuralab.com", "password123").catch(() => {});
   }
 
+  const modalTitle = authMode === "login"
+    ? (hasPendingAction ? "Sign In or Continue as Guest" : "Sign In to Your Account")
+    : (hasPendingAction ? "Create Account or Continue as Guest" : "Create Your Account");
+
+  const modalSubtitle = authMode === "login"
+    ? (hasPendingAction
+        ? "Sign in to save your bespoke order history, or close (×) to add to cart and checkout as guest."
+        : "Access your order history and bespoke fragrance collection.")
+    : (hasPendingAction
+        ? "Create an account to track your orders, or close (×) to checkout as guest."
+        : "Create a Xura Lab account to curate your bespoke fragrances.");
+
   return (
     <div
       className="auth-modal-overlay"
@@ -276,21 +323,16 @@ function CustomerLoginModal() {
           className="auth-modal-close"
           type="button"
           onClick={closeLoginModal}
-          aria-label="Close modal"
+          aria-label={hasPendingAction ? "Close and add to cart as guest" : "Close modal"}
+          title={hasPendingAction ? "Close & continue to cart" : "Close modal"}
         >
           ×
         </button>
 
         <div className="auth-modal-header">
           <span className="auth-modal-kicker">CLIENT PRIVILEGE</span>
-          <h2 className="auth-modal-title">
-            {authMode === "login" ? "Sign In to Continue" : "Create Your Account"}
-          </h2>
-          <p className="auth-modal-subtitle">
-            {authMode === "login"
-              ? "Please sign in to add fragrances to your shopping bag."
-              : "Create a Xura Lab account to curate your bespoke fragrances."}
-          </p>
+          <h2 className="auth-modal-title">{modalTitle}</h2>
+          <p className="auth-modal-subtitle">{modalSubtitle}</p>
         </div>
 
         {/* Tab switcher */}
@@ -386,11 +428,25 @@ function CustomerLoginModal() {
           <button className="auth-submit-btn" type="submit" disabled={isSubmitting}>
             {isSubmitting
               ? "PROCESSING…"
-              : authMode === "login"
-              ? "SIGN IN & ADD TO CART"
-              : "CREATE ACCOUNT & ADD TO CART"}
+              : hasPendingAction
+              ? (authMode === "login" ? "SIGN IN & ADD TO CART" : "CREATE ACCOUNT & ADD TO CART")
+              : (authMode === "login" ? "SIGN IN" : "CREATE ACCOUNT")}
           </button>
         </form>
+
+        {hasPendingAction && (
+          <div className="auth-guest-option">
+            <span className="auth-divider-text">OR SHOP WITHOUT AN ACCOUNT</span>
+            <button
+              type="button"
+              className="auth-continue-guest-btn"
+              onClick={closeLoginModal}
+            >
+              <span>Continue as Guest & Add to Cart</span>
+              <span aria-hidden="true">→</span>
+            </button>
+          </div>
+        )}
 
         {authMode === "login" && (
           <div className="auth-quick-access">

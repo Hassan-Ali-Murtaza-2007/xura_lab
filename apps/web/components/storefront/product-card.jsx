@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 const number = new Intl.NumberFormat("en-PK", { maximumFractionDigits: 0 });
 const money = (value) => `PKR ${number.format(Number(value || 0))}`;
@@ -37,9 +37,57 @@ export default function ProductCard({ product, onAddToCart }) {
 
   const variants = product.variants || [];
   const hasMultipleVariants = variants.length > 1;
+  const isBundle = product.gender === "Bundles" || Boolean(product.bundleItems?.length);
 
-  const compareAt = Number(product.compareAtPrice || 0);
-  const currentPrice = Number(product.price || product.startingPrice || 0);
+  const { currentPrice, compareAt } = useMemo(() => {
+    let pPrice = Number(product.price || product.startingPrice || 0);
+    let pComp = Number(product.compareAtPrice || 0);
+
+    if (isBundle && Array.isArray(product.bundleItems) && product.bundleItems.length > 0) {
+      let lowestStandardSum = 0;
+      let lowestCompareSum = 0;
+      for (const bottle of product.bundleItems) {
+        const concs = Array.isArray(bottle.concentrations) ? bottle.concentrations : [];
+        if (concs.length > 0) {
+          const prices = concs.map((c) => (typeof c === "object" ? Number(c.price) : Number(c))).filter((p) => Number.isFinite(p) && p > 0);
+          const compares = concs.map((c) => {
+            if (typeof c === "object") {
+              const comp = Number(c.compareAtPrice);
+              const pr = Number(c.price);
+              return Number.isFinite(comp) && comp > pr ? comp : (Number.isFinite(pr) && pr > 0 ? pr : 2500);
+            }
+            return Number(c) || 2500;
+          });
+          const minP = prices.length ? Math.min(...prices) : 2500;
+          const minC = compares.length ? Math.min(...compares) : minP;
+          lowestStandardSum += minP;
+          lowestCompareSum += (minC > minP ? minC : minP);
+        } else {
+          lowestStandardSum += 2500;
+          lowestCompareSum += 2500;
+        }
+      }
+      const discountRate = (100 - (Number(product.bundleDiscountPercent) || 10)) / 100;
+      const lowestBundlePrice = Math.round(lowestStandardSum * discountRate);
+      const lowestBundleComp = lowestCompareSum > lowestBundlePrice ? lowestCompareSum : (lowestStandardSum > lowestBundlePrice ? lowestStandardSum : 0);
+      if (lowestBundlePrice > 0) {
+        pPrice = lowestBundlePrice;
+        pComp = lowestBundleComp;
+      }
+    } else if (variants.length > 0) {
+      const vPrices = variants.map((v) => Number(v.price)).filter((p) => Number.isFinite(p) && p > 0);
+      if (vPrices.length) {
+        const minVPrice = Math.min(...vPrices);
+        pPrice = minVPrice;
+        const match = variants.find((v) => Number(v.price) === minVPrice);
+        if (match?.compareAtPrice && Number(match.compareAtPrice) > minVPrice) {
+          pComp = Number(match.compareAtPrice);
+        }
+      }
+    }
+    return { currentPrice: pPrice, compareAt: pComp };
+  }, [product, isBundle, variants]);
+
   const hasProductDiscount = compareAt > 0 && currentPrice > 0 && compareAt > currentPrice;
   const productDiscountPct = hasProductDiscount ? Math.round(((compareAt - currentPrice) / compareAt) * 100) : 0;
 
@@ -52,8 +100,6 @@ export default function ProductCard({ product, onAddToCart }) {
     }
     return max;
   }, productDiscountPct);
-
-  const isBundle = product.gender === "Bundles" || Boolean(product.bundleItems?.length);
 
   function handleQuickClick(event) {
     event.preventDefault();

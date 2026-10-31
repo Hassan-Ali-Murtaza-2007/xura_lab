@@ -166,6 +166,39 @@ export function parseProductInput(body) {
   product.price = Math.min(...product.variants.map((variant) => variant.price));
   const startingVariant = product.variants.find((variant) => variant.price === product.price);
   product.compareAtPrice = startingVariant?.compareAtPrice || null;
+
+  // For bundles, guarantee that product.price and compareAtPrice match the true lowest possible bottle combination
+  if ((product.gender === "Bundles" || product.bundleItems) && Array.isArray(product.bundleItems) && product.bundleItems.length > 0) {
+    let lowestStandardSum = 0;
+    let lowestCompareSum = 0;
+    for (const bottle of product.bundleItems) {
+      const concs = Array.isArray(bottle.concentrations) ? bottle.concentrations : [];
+      if (concs.length > 0) {
+        const prices = concs.map((c) => Number(c.price)).filter((p) => Number.isFinite(p) && p > 0);
+        const compares = concs.map((c) => {
+          const comp = Number(c.compareAtPrice);
+          const pr = Number(c.price);
+          return Number.isFinite(comp) && comp > pr ? comp : (Number.isFinite(pr) && pr > 0 ? pr : 2500);
+        });
+        const minP = prices.length ? Math.min(...prices) : 2500;
+        const minC = compares.length ? Math.min(...compares) : minP;
+        lowestStandardSum += minP;
+        lowestCompareSum += (minC > minP ? minC : minP);
+      } else {
+        lowestStandardSum += 2500;
+        lowestCompareSum += 2500;
+      }
+    }
+    const discountRate = (100 - (Number(product.bundleDiscountPercent) || 0)) / 100;
+    const lowestDiscountedPrice = Math.round(lowestStandardSum * discountRate);
+    const lowestCompare = lowestCompareSum > lowestDiscountedPrice ? lowestCompareSum : (lowestStandardSum > lowestDiscountedPrice ? lowestStandardSum : null);
+
+    if (lowestDiscountedPrice > 0) {
+      product.price = lowestDiscountedPrice;
+      product.compareAtPrice = lowestCompare;
+    }
+  }
+
   return product;
 }
 

@@ -88,8 +88,16 @@ export default function AdminProductForm({ product = null, onCancel, onCreated, 
   const imageInput = useRef(null);
   const [fields, setFields] = useState(() => fieldsForProduct(product));
   const [bundleBottles, setBundleBottles] = useState(() => {
-    if (product?.bundleItems && Array.isArray(product.bundleItems) && product.bundleItems.length > 0) {
-      return product.bundleItems.map((b, i) => ({
+    let items = product?.bundleItems;
+    if (typeof items === "string") {
+      try {
+        items = JSON.parse(items);
+      } catch {
+        items = null;
+      }
+    }
+    if (items && Array.isArray(items) && items.length > 0) {
+      return items.map((b, i) => ({
         name: b.name || `Fragrance ${i + 1}`,
         tagline: b.tagline || "",
         volumeMl: b.volumeMl || product?.volumeMl || 50,
@@ -114,7 +122,22 @@ export default function AdminProductForm({ product = null, onCancel, onCreated, 
   const [bundleDiscountPercent, setBundleDiscountPercent] = useState(() => {
     return Number.isFinite(Number(product?.bundleDiscountPercent)) ? Number(product.bundleDiscountPercent) : 10;
   });
-  const [simulatedSelections, setSimulatedSelections] = useState([40, 20]);
+  const [simulatedSelections, setSimulatedSelections] = useState(() => {
+    let items = product?.bundleItems;
+    if (typeof items === "string") {
+      try { items = JSON.parse(items); } catch {}
+    }
+    const bottles = Array.isArray(items) && items.length > 0 ? items : null;
+    if (bottles) {
+      return bottles.map((b) => {
+        const concs = Array.isArray(b.concentrations) ? b.concentrations : [];
+        if (!concs.length) return 10;
+        const lowest = concs.reduce((min, c) => (Number(c.price) < Number(min.price) ? c : min), concs[0]);
+        return Number(lowest.concentrationPercent || 10);
+      });
+    }
+    return [10, 20];
+  });
   const [variants, setVariants] = useState(() => variantsForProduct(product));
   const [existingImageUrls, setExistingImageUrls] = useState(() => (
     product?.images?.length ? product.images : (product?.imageUrl ? [product.imageUrl] : [])
@@ -368,36 +391,72 @@ export default function AdminProductForm({ product = null, onCancel, onCreated, 
     }));
 
     if (fields.gender === "Bundles") {
-      const serializedBundleItems = bundleBottles.map((b) => ({
-        name: (b.name || "").trim(),
-        tagline: (b.tagline || "").trim(),
-        volumeMl: Number(b.volumeMl) || Number(fields.volumeMl) || 50,
-        concentrations: b.concentrations.map((c) => ({
+      const serializedBundleItems = bundleBottles.map((b) => {
+        const concs = b.concentrations.map((c) => ({
           concentrationPercent: Number(c.concentrationPercent),
           price: Number(c.price),
           compareAtPrice: c.compareAtPrice && Number(c.compareAtPrice) > Number(c.price) ? Number(c.compareAtPrice) : null
-        })),
-        defaultConcentration: Number(b.concentrations[0]?.concentrationPercent) || 20
-      }));
+        }));
+        const lowestConc = concs.reduce((min, c) => (Number(c.price) < Number(min.price) ? c : min), concs[0]);
+        return {
+          name: (b.name || "").trim(),
+          tagline: (b.tagline || "").trim(),
+          volumeMl: Number(b.volumeMl) || Number(fields.volumeMl) || 50,
+          concentrations: concs,
+          defaultConcentration: Number(lowestConc?.concentrationPercent) || 10
+        };
+      });
       body.append("bundleItems", JSON.stringify(serializedBundleItems));
       body.append("bundleDiscountPercent", String(bundleDiscountPercent));
 
+      // Calculate lowest possible price combination across all bottles
+      const discountRate = (100 - Number(bundleDiscountPercent || 10)) / 100;
+      let lowestStandardSum = 0;
+      let lowestCompareSum = 0;
+      for (const b of serializedBundleItems) {
+        if (b.concentrations.length > 0) {
+          const minP = Math.min(...b.concentrations.map((c) => c.price));
+          const match = b.concentrations.find((c) => c.price === minP);
+          const minC = match?.compareAtPrice || minP;
+          lowestStandardSum += minP;
+          lowestCompareSum += minC;
+        } else {
+          lowestStandardSum += 2500;
+          lowestCompareSum += 2500;
+        }
+      }
+      const lowestDiscountedPrice = Math.round(lowestStandardSum * discountRate);
+      const lowestCompareAt = lowestCompareSum > lowestDiscountedPrice ? lowestCompareSum : (lowestStandardSum > lowestDiscountedPrice ? lowestStandardSum : null);
+
       // Build representative combo variants for the database
-      const b1 = bundleBottles[0];
-      const b2 = bundleBottles[1];
-      if (b1 && b2) {
-        const distinctConcs = [10, 20, 40];
-        variantsToSubmit = distinctConcs.map((conc) => {
-          const p1 = Number(b1.concentrations.find((c) => Number(c.concentrationPercent) === conc)?.price) || defaultPriceForConc(conc);
-          const p2 = Number(b2.concentrations.find((c) => Number(c.concentrationPercent) === conc)?.price) || defaultPriceForConc(conc);
-          const sum = p1 + p2;
-          const discounted = Math.round(sum * ((100 - bundleDiscountPercent) / 100));
-          return {
-            concentrationPercent: conc,
-            price: discounted,
-            compareAtPrice: sum
-          };
-        });
+      const b1 = serializedBundleItems[0];
+      const otherBottles = serializedBundleItems.slice(1);
+      const otherMinSum = otherBottles.reduce((sum, ob) => {
+        const minP = ob.concentrations.length ? Math.min(...ob.concentrations.map((c) => c.price)) : 0;
+        return sum + minP;
+      }, 0);
+      const otherMinCompSum = otherBottles.reduce((sum, ob) => {
+        const minP = ob.concentrations.length ? Math.min(...ob.concentrations.map((c) => c.price)) : 0;
+        const match = ob.concentrations.find((c) => c.price === minP);
+        return sum + (match?.compareAtPrice || minP);
+      }, 0);
+
+      const b1Concs = b1?.concentrations?.length ? b1.concentrations : [{ concentrationPercent: 10, price: 2500 }];
+      variantsToSubmit = b1Concs.map((c) => {
+        const sum = c.price + otherMinSum;
+        const compSum = (c.compareAtPrice || c.price) + otherMinCompSum;
+        const discounted = Math.round(sum * discountRate);
+        return {
+          concentrationPercent: c.concentrationPercent,
+          price: discounted,
+          compareAtPrice: compSum > discounted ? compSum : sum
+        };
+      });
+
+      variantsToSubmit.sort((a, b) => a.price - b.price);
+      if (variantsToSubmit.length > 0) {
+        variantsToSubmit[0].price = lowestDiscountedPrice;
+        variantsToSubmit[0].compareAtPrice = lowestCompareAt;
       }
     }
 

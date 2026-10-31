@@ -179,10 +179,15 @@ export default function ProductDetail({ product }) {
     if (bundleBottles.length) {
       setSelectedBottleConcentrations(
         bundleBottles.map((b) => {
-          if (b.defaultConcentration) return Number(b.defaultConcentration);
-          const first = b.concentrations?.[0];
-          if (typeof first === "object" && first !== null) return Number(first.concentrationPercent || 20);
-          return Number(first || 20);
+          const concs = Array.isArray(b.concentrations) ? b.concentrations : [];
+          if (!concs.length) return 20;
+          // Select lowest priced concentration by default so product detail matches lowest starting price
+          const lowestConc = concs.reduce((min, c) => {
+            const p = typeof c === "object" ? Number(c.price) : 2500;
+            const minP = typeof min === "object" ? Number(min.price) : 2500;
+            return p < minP ? c : min;
+          }, concs[0]);
+          return typeof lowestConc === "object" ? Number(lowestConc.concentrationPercent || 20) : Number(lowestConc || 20);
         })
       );
     }

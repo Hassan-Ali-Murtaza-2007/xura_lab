@@ -19,6 +19,73 @@ import {
 import { availableSlug } from "../utils/slugify.js";
 import { parseProductInput, productSummary, withCurrentImage } from "../utils/validators.js";
 
+function formatAdminProduct(product, variants, images) {
+  let bundleItems = product.bundleItems || null;
+  if (typeof bundleItems === "string") {
+    try {
+      bundleItems = JSON.parse(bundleItems);
+    } catch {
+      bundleItems = null;
+    }
+  }
+
+  let price = Number(product.price || 0);
+  let compareAtPrice = product.compareAtPrice ? Number(product.compareAtPrice) : null;
+
+  if (bundleItems && Array.isArray(bundleItems) && bundleItems.length > 0) {
+    let lowestStandardSum = 0;
+    let lowestCompareSum = 0;
+    for (const bottle of bundleItems) {
+      const concs = Array.isArray(bottle.concentrations) ? bottle.concentrations : [];
+      if (concs.length > 0) {
+        const prices = concs.map((c) => (typeof c === "object" ? Number(c.price) : Number(c))).filter((p) => Number.isFinite(p) && p > 0);
+        const compares = concs.map((c) => {
+          if (typeof c === "object") {
+            const comp = Number(c.compareAtPrice);
+            const pr = Number(c.price);
+            return Number.isFinite(comp) && comp > pr ? comp : (Number.isFinite(pr) && pr > 0 ? pr : 2500);
+          }
+          return Number(c) || 2500;
+        });
+        const minP = prices.length ? Math.min(...prices) : 2500;
+        const minC = compares.length ? Math.min(...compares) : minP;
+        lowestStandardSum += minP;
+        lowestCompareSum += (minC > minP ? minC : minP);
+      } else {
+        lowestStandardSum += 2500;
+        lowestCompareSum += 2500;
+      }
+    }
+    const discountRate = (100 - (Number(product.bundleDiscountPercent) || 10)) / 100;
+    const lowestDiscounted = Math.round(lowestStandardSum * discountRate);
+    const lowestComp = lowestCompareSum > lowestDiscounted ? lowestCompareSum : (lowestStandardSum > lowestDiscounted ? lowestStandardSum : null);
+    if (lowestDiscounted > 0) {
+      price = lowestDiscounted;
+      compareAtPrice = lowestComp;
+    }
+  } else if (variants?.length) {
+    const vPrices = variants.map((v) => Number(v.price)).filter((p) => Number.isFinite(p) && p > 0);
+    if (vPrices.length) {
+      const minVPrice = Math.min(...vPrices);
+      price = minVPrice;
+      const match = variants.find((v) => Number(v.price) === minVPrice);
+      if (match?.compareAtPrice && Number(match.compareAtPrice) > minVPrice) {
+        compareAtPrice = Number(match.compareAtPrice);
+      }
+    }
+  }
+
+  return withCurrentImage({
+    ...product,
+    price,
+    startingPrice: price,
+    compareAtPrice,
+    bundleItems,
+    variants: variants || [],
+    images: images || [product.imageUrl]
+  });
+}
+
 const router = Router();
 
 router.post("/products", requireAdmin, productImageUpload.array("images", 5), async (request, response) => {
@@ -155,11 +222,11 @@ router.get("/products", requireAdmin, async (_request, response) => {
     response.json({
       source: "mysql",
       products: products.map((p) =>
-        withCurrentImage({
-          ...p,
-          variants: variantsByProduct.get(p.id) || [],
-          images: imagesByProduct.get(p.id) || [p.imageUrl]
-        })
+        formatAdminProduct(
+          p,
+          variantsByProduct.get(p.id) || [],
+          imagesByProduct.get(p.id)
+        )
       )
     });
   } catch (error) {
@@ -202,11 +269,11 @@ router.get("/products/:id", requireAdmin, async (request, response) => {
     const product = products[0];
     response.json({
       source: "mysql",
-      product: withCurrentImage({
-        ...product,
+      product: formatAdminProduct(
+        product,
         variants,
-        images: imagesByProduct.get(productId) || [product.imageUrl]
-      })
+        imagesByProduct.get(productId)
+      )
     });
   } catch (error) {
     response

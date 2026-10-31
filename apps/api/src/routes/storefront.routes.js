@@ -25,18 +25,65 @@ function formatProductBundle(product) {
         name: "Nyra",
         tagline: "Luminous white florals, roasted coffee & vanilla",
         volumeMl: 50,
-        concentrations: [10, 20, 40],
+        concentrations: [
+          { concentrationPercent: 10, price: 2500, compareAtPrice: null },
+          { concentrationPercent: 20, price: 3500, compareAtPrice: null },
+          { concentrationPercent: 40, price: 5500, compareAtPrice: null }
+        ],
         defaultConcentration: 20
       },
       {
         name: "Arven",
         tagline: "Rich oud, warm amber & refined leather",
         volumeMl: 50,
-        concentrations: [10, 20, 40],
+        concentrations: [
+          { concentrationPercent: 10, price: 2500, compareAtPrice: null },
+          { concentrationPercent: 20, price: 3500, compareAtPrice: null },
+          { concentrationPercent: 40, price: 5500, compareAtPrice: null }
+        ],
         defaultConcentration: 10
       }
     ];
   }
+
+  // Calculate the lowest bundle price dynamically from individual bottle options
+  if (bundleItems && Array.isArray(bundleItems) && bundleItems.length > 0) {
+    let lowestStandardSum = 0;
+    let lowestCompareSum = 0;
+    for (const bottle of bundleItems) {
+      const concs = Array.isArray(bottle.concentrations) ? bottle.concentrations : [];
+      if (concs.length > 0) {
+        const prices = concs.map((c) => (typeof c === "object" ? Number(c.price) : Number(c))).filter((p) => Number.isFinite(p) && p > 0);
+        const compares = concs.map((c) => {
+          if (typeof c === "object") {
+            const comp = Number(c.compareAtPrice);
+            const pr = Number(c.price);
+            return Number.isFinite(comp) && comp > pr ? comp : (Number.isFinite(pr) && pr > 0 ? pr : 2500);
+          }
+          return Number(c) || 2500;
+        });
+        const minP = prices.length ? Math.min(...prices) : 2500;
+        const minC = compares.length ? Math.min(...compares) : minP;
+        lowestStandardSum += minP;
+        lowestCompareSum += (minC > minP ? minC : minP);
+      } else {
+        lowestStandardSum += 2500;
+        lowestCompareSum += 2500;
+      }
+    }
+    const discountRate = (100 - (Number(product.bundleDiscountPercent) || 10)) / 100;
+    const lowestPrice = Math.round(lowestStandardSum * discountRate);
+    const lowestCompare = lowestCompareSum > lowestPrice ? lowestCompareSum : (lowestStandardSum > lowestPrice ? lowestStandardSum : null);
+
+    if (lowestPrice > 0) {
+      product = {
+        ...product,
+        price: lowestPrice,
+        compareAtPrice: lowestCompare
+      };
+    }
+  }
+
   return { ...product, bundleItems };
 }
 
